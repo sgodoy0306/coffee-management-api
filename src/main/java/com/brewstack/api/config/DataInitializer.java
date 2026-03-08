@@ -32,31 +32,31 @@ public class DataInitializer implements CommandLineRunner {
         seedIngredientIfAbsent("Water",            10000.0, 2000.0, "ml");
         seedIngredientIfAbsent("Ice",              500.0,   100.0, "cubes");
 
-        seedRecipeIfAbsent("Espresso",    10, new BigDecimal("2500.00"), List.of(
+        seedRecipeIfAbsent("Espresso",    10, new BigDecimal("3.50"), List.of(
                 ri("Espresso Beans", 18.0)
         ));
-        seedRecipeIfAbsent("Latte",       25, new BigDecimal("3500.00"), List.of(
+        seedRecipeIfAbsent("Latte",       25, new BigDecimal("5.50"), List.of(
                 ri("Espresso Beans", 18.0),
                 ri("Whole Milk",     200.0)
         ));
-        seedRecipeIfAbsent("Flat White",  30, new BigDecimal("3800.00"), List.of(
+        seedRecipeIfAbsent("Flat White",  30, new BigDecimal("5.00"), List.of(
                 ri("Espresso Beans", 18.0),
                 ri("Whole Milk",     150.0)
         ));
-        seedRecipeIfAbsent("Cappuccino",  25, new BigDecimal("3500.00"), List.of(
+        seedRecipeIfAbsent("Cappuccino",  25, new BigDecimal("5.00"), List.of(
                 ri("Espresso Beans", 18.0),
                 ri("Whole Milk",     150.0)
         ));
-        seedRecipeIfAbsent("Matcha Latte", 35, new BigDecimal("4500.00"), List.of(
+        seedRecipeIfAbsent("Matcha Latte", 35, new BigDecimal("6.50"), List.of(
                 ri("Matcha Powder", 5.0),
                 ri("Oat Milk",      200.0)
         ));
-        seedRecipeIfAbsent("Mocha",       30, new BigDecimal("4000.00"), List.of(
+        seedRecipeIfAbsent("Mocha",       30, new BigDecimal("6.00"), List.of(
                 ri("Espresso Beans",    18.0),
                 ri("Chocolate Powder",  15.0),
                 ri("Whole Milk",        150.0)
         ));
-        seedRecipeIfAbsent("Iced Americano", 15, new BigDecimal("3000.00"), List.of(
+        seedRecipeIfAbsent("Iced Americano", 15, new BigDecimal("4.50"), List.of(
                 ri("Espresso Beans", 18.0),
                 ri("Water",          200.0),
                 ri("Ice",            3.0)
