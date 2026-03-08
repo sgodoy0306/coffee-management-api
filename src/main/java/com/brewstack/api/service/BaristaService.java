@@ -1,11 +1,13 @@
 package com.brewstack.api.service;
 
 import com.brewstack.api.dto.LevelUpDTO;
+import com.brewstack.api.exception.BaristaNotFoundException;
 import com.brewstack.api.model.Barista;
 import com.brewstack.api.repository.BaristaRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class BaristaService {
@@ -14,6 +16,15 @@ public class BaristaService {
 
     public BaristaService(BaristaRepository baristaRepository) {
         this.baristaRepository = baristaRepository;
+    }
+
+    public List<Barista> findAll() {
+        return baristaRepository.findAll();
+    }
+
+    public Barista findById(Long id) {
+        return baristaRepository.findById(id)
+                .orElseThrow(() -> new BaristaNotFoundException(id));
     }
 
     public Barista createBarista(String name) {
@@ -25,9 +36,23 @@ public class BaristaService {
     }
 
     @Transactional
+    public Barista updateBarista(Long id, String name) {
+        Barista barista = findById(id);
+        barista.setName(name);
+        return baristaRepository.save(barista);
+    }
+
+    public void deleteBarista(Long id) {
+        if (!baristaRepository.existsById(id)) {
+            throw new BaristaNotFoundException(id);
+        }
+        baristaRepository.deleteById(id);
+    }
+
+    @Transactional
     public LevelUpDTO addExperience(Long baristaId, Integer rating) {
         Barista barista = baristaRepository.findById(baristaId)
-                .orElseThrow(() -> new EntityNotFoundException("Barista not found with id: " + baristaId));
+                .orElseThrow(() -> new BaristaNotFoundException(baristaId));
 
         int previousLevel = barista.getLevel();
 
