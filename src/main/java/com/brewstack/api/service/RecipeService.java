@@ -1,9 +1,14 @@
 package com.brewstack.api.service;
 
+import com.brewstack.api.dto.CreateRecipeRequest;
 import com.brewstack.api.dto.RecipeDTO;
 import com.brewstack.api.dto.RecipeIngredientDTO;
+import com.brewstack.api.exception.IngredientNotFoundException;
 import com.brewstack.api.exception.RecipeNotFoundException;
+import com.brewstack.api.model.Ingredient;
 import com.brewstack.api.model.Recipe;
+import com.brewstack.api.model.RecipeIngredient;
+import com.brewstack.api.repository.IngredientRepository;
 import com.brewstack.api.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +22,7 @@ import java.util.List;
 public class RecipeService {
 
     private final RecipeRepository recipeRepository;
+    private final IngredientRepository ingredientRepository;
 
     public List<RecipeDTO> findAll() {
         return recipeRepository.findAll().stream().map(this::toDTO).toList();
@@ -25,6 +31,24 @@ public class RecipeService {
     public RecipeDTO findById(Long id) {
         return toDTO(recipeRepository.findById(id)
                 .orElseThrow(() -> new RecipeNotFoundException(id)));
+    }
+
+    @Transactional
+    public RecipeDTO createRecipe(CreateRecipeRequest request) {
+        Recipe recipe = new Recipe();
+        recipe.setName(request.name());
+        recipe.setBaseXpReward(request.baseXpReward());
+        recipe.setPrice(request.price());
+        Recipe saved = recipeRepository.save(recipe);
+
+        List<RecipeIngredient> links = request.ingredients().stream().map(req -> {
+            Ingredient ingredient = ingredientRepository.findByName(req.ingredientName())
+                    .orElseThrow(() -> new IngredientNotFoundException(req.ingredientName()));
+            return new RecipeIngredient(null, saved, ingredient, req.quantity());
+        }).toList();
+
+        saved.setIngredients(links);
+        return toDTO(recipeRepository.save(saved));
     }
 
     private RecipeDTO toDTO(Recipe recipe) {
