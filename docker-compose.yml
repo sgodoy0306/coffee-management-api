@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: brewstack-db
+    environment:
+      POSTGRES_DB: coffeedb
+      POSTGRES_USER: brewstack
+      POSTGRES_PASSWORD: brewstack123
+    ports:
+      - "4040:5432"
+    volumes:
+      - brewstack_data:/var/lib/postgresql/data
+
+volumes:
+  brewstack_data:
