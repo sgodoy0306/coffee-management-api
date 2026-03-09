@@ -46,7 +46,8 @@ public class BrewService {
         DailyBalance balance = dailyBalanceRepository.findById(today)
                 .orElse(new DailyBalance(today, BigDecimal.ZERO, 0));
 
-        balance.setTotalRevenue(balance.getTotalRevenue().add(recipe.getPrice()));
+        BigDecimal recipePrice = recipe.getPrice() != null ? recipe.getPrice() : BigDecimal.ZERO;
+        balance.setTotalRevenue(balance.getTotalRevenue().add(recipePrice));
         balance.setTotalOrders(balance.getTotalOrders() + 1);
 
         dailyBalanceRepository.save(balance);
