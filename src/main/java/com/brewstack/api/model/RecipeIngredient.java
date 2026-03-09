@@ -3,7 +3,9 @@ package com.brewstack.api.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "recipe_ingredients")
@@ -18,6 +20,8 @@ public class RecipeIngredient {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "recipe_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Recipe recipe;
 
     @ManyToOne(optional = false)

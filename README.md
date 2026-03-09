@@ -237,21 +237,56 @@ Returns `404` if any ingredient name does not exist in the database.
 ### Brew — `/api/brew`
 
 
-| Method | Path                   | Description                                       |
-| ------ | ---------------------- | ------------------------------------------------- |
-| `POST` | `/api/brew/{recipeId}` | Process a brew: deducts stock and records revenue |
+| Method | Path                   | Description                                                       | Body                              |
+| ------ | ---------------------- | ----------------------------------------------------------------- | --------------------------------- |
+| `POST` | `/api/brew/{recipeId}` | Process a single brew: deducts stock and records revenue          | —                                 |
+| `POST` | `/api/brew/order`      | Process a multi-recipe order and award XP to the assigned barista | `{ "recipeIds", "baristaId" }`    |
 
 
 Returns `400` if any ingredient has insufficient stock.
+
+**POST /api/brew/order request example:**
+
+```json
+{
+  "recipeIds": [1, 3, 5],
+  "baristaId": 2
+}
+```
+
+**POST /api/brew/order response example:**
+
+```json
+{
+  "baristaXp": 350,
+  "baristaLevel": 2,
+  "totalRevenue": 17.00,
+  "totalOrders": 3
+}
+```
+
+Stock is validated for all recipes atomically before any deduction. The barista is awarded XP equal to the sum of each recipe's `baseXpReward`.
 
 ---
 
 ### Stock — `/api/stock`
 
 
-| Method | Path         | Description                           |
-| ------ | ------------ | ------------------------------------- |
-| `GET`  | `/api/stock` | List all ingredients and stock levels |
+| Method   | Path                      | Description                            | Body               |
+| -------- | ------------------------- | -------------------------------------- | ------------------ |
+| `GET`    | `/api/stock`              | List all ingredients and stock levels  | —                  |
+| `PATCH`  | `/api/stock/{id}/restock` | Add stock to an ingredient by ID       | `{ "amount" }`     |
+
+
+**PATCH /api/stock/{id}/restock request example:**
+
+```json
+{
+  "amount": 500.0
+}
+```
+
+Returns `404` if the ingredient is not found.
 
 
 ---
