@@ -71,7 +71,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private void seedRecipeIfAbsent(String name, int xp, BigDecimal price, List<RecipeIngredient> links) {
         if (recipeRepository.existsByName(name)) return;
-        Recipe recipe = recipeRepository.save(new Recipe(null, name, xp, price, null));
+        Recipe recipe = recipeRepository.save(new Recipe(null, name, xp, price, null, null));
         List<RecipeIngredient> saved = new ArrayList<>();
         for (RecipeIngredient link : links) {
             link.setRecipe(recipe);

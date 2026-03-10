@@ -8,5 +8,6 @@ public record RecipeDTO(
         String name,
         Integer baseXpReward,
         BigDecimal price,
+        String imageUrl,
         List<RecipeIngredientDTO> ingredients
 ) {}
