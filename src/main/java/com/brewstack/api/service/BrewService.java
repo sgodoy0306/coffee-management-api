@@ -15,6 +15,7 @@ import com.brewstack.api.repository.DailyBalanceRepository;
 import com.brewstack.api.repository.IngredientRepository;
 import com.brewstack.api.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,10 +74,14 @@ public class BrewService {
                     .orElseThrow(() -> new RecipeNotFoundException(recipeId)));
         }
 
-        // Validate stock for every item before touching anything (atomicity)
+        // Validate stock for every item before touching anything (atomicity).
+        // findByIdWithLock issues SELECT ... FOR UPDATE, preventing concurrent
+        // transactions from reading the same stock value and both passing validation.
         for (Recipe recipe : recipes) {
             for (RecipeIngredient ri : recipe.getIngredients()) {
-                Ingredient ingredient = ri.getIngredient();
+                Ingredient ingredient = ingredientRepository
+                        .findByIdWithLock(ri.getIngredient().getId())
+                        .orElseThrow(() -> new InsufficientStockException(ri.getIngredient().getName()));
                 if (ingredient.getCurrentStock() < ri.getQuantityRequired()) {
                     throw new InsufficientStockException(ingredient.getName());
                 }
@@ -90,7 +95,9 @@ public class BrewService {
 
         for (Recipe recipe : recipes) {
             for (RecipeIngredient ri : recipe.getIngredients()) {
-                Ingredient ingredient = ri.getIngredient();
+                Ingredient ingredient = ingredientRepository
+                        .findByIdWithLock(ri.getIngredient().getId())
+                        .orElseThrow(() -> new InsufficientStockException(ri.getIngredient().getName()));
                 ingredient.setCurrentStock(ingredient.getCurrentStock() - ri.getQuantityRequired());
                 ingredientRepository.save(ingredient);
             }
