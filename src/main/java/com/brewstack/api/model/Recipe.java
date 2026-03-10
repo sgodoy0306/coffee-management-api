@@ -26,6 +26,9 @@ public class Recipe {
     @Column(name = "price", precision = 10, scale = 2, columnDefinition = "NUMERIC(10,2)")
     private BigDecimal price;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecipeIngredient> ingredients;
 }
