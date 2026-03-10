@@ -177,7 +177,7 @@ This runs: `db → compile → test → package → run` in sequence.
 | -------- | ------------------- | ------------------ | ---------------------------------------------------- |
 | `GET`    | `/api/recipes`      | List all recipes   | —                                                    |
 | `GET`    | `/api/recipes/{id}` | Get a recipe by ID | —                                                    |
-| `POST`   | `/api/recipes`      | Create a recipe    | `{ "name", "baseXpReward", "price", "ingredients" }` |
+| `POST`   | `/api/recipes`      | Create a recipe    | `{ "name", "baseXpReward", "price", "imageUrl", "ingredients" }` |
 | `PUT`    | `/api/recipes/{id}` | Update a recipe    | `{ "name", "baseXpReward", "price" }`                |
 | `DELETE` | `/api/recipes/{id}` | Delete a recipe    | —                                                    |
 
@@ -191,6 +191,7 @@ This runs: `db → compile → test → package → run` in sequence.
     "name": "Latte",
     "baseXpReward": 25,
     "price": 5.50,
+    "imageUrl": "https://example.com/latte.jpg",
     "ingredients": [
       { "ingredientName": "Espresso Beans", "unit": "grams", "quantityRequired": 18.0 },
       { "ingredientName": "Whole Milk",     "unit": "ml",    "quantityRequired": 200.0 }
@@ -206,14 +207,15 @@ This runs: `db → compile → test → package → run` in sequence.
   "name": "Vanilla Latte",
   "baseXpReward": 30,
   "price": 6.00,
+  "imageUrl": "https://example.com/vanilla-latte.jpg",
   "ingredients": [
-    { "ingredientName": "Espresso Beans", "quantity": 18.0 },
-    { "ingredientName": "Whole Milk",     "quantity": 200.0 }
+    { "ingredientId": 1, "quantity": 18.0 },
+    { "ingredientId": 2, "quantity": 200.0 }
   ]
 }
 ```
 
-Returns `404` if any ingredient name does not exist in the database.
+Returns `404` if any ingredient ID does not exist in the database.
 
 ---
 
