@@ -10,5 +10,6 @@ import java.math.BigDecimal;
 public record UpdateRecipeRequest(
         @NotBlank String name,
         @NotNull @Min(0) Integer baseXpReward,
-        @NotNull @DecimalMin("0.00") BigDecimal price
+        @NotNull @DecimalMin("0.00") BigDecimal price,
+        String imageUrl
 ) {}
