@@ -114,11 +114,20 @@ No `RecipeIngredientRepository` exists. Correct teardown order: `recipeRepositor
 - Write/Edit tools may be permission-denied on `pom.xml` in some sessions. Use a Python3 inline script via Bash as fallback to modify `pom.xml`.
 - Python3 string replacement scripts can fail silently if the target substring is not found exactly. Always verify with Read after the script runs, then use Edit tool as a reliable fallback for remaining changes.
 
+## Service Layer Pattern (confirmed for this project)
+
+- `BaristaService` uses explicit constructor (not `@RequiredArgsConstructor`) — new services follow the same explicit constructor pattern.
+- `@Transactional` is applied at the method level only on write operations (not the whole class).
+- Read-only methods do NOT need `@Transactional` in this project (no `@Transactional(readOnly = true)` used).
+- `StockService` owns: `getAllStock()`, `restock(Long id, RestockRequest request)`.
+- `FinancialService` owns: `getDailyReport()`, `getHistory()`.
+- Both services added in R5. Controllers (`StockController`, `FinancialController`) no longer inject repositories directly.
+
 ## Recurring Anti-Patterns Observed
 
 - Model classes use Lombok `@Data` (not records) — acceptable for JPA entities; records required only in `dto/` package.
 - `ApiApplicationTests` was using `@SpringBootTest` without Testcontainers — caused connection failure since the app needs a real PostgreSQL DB.
-- Controllers injecting repositories directly (R5 still open: `StockController`, `FinancialController`).
+- Controllers injecting repositories directly — fixed in R5 for `StockController` and `FinancialController`.
 - Integration tests previously used H2 with PostgreSQL compatibility mode — replaced with real PostgreSQL via Testcontainers for production parity.
 
 ## Links to Detail Files

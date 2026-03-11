@@ -77,4 +77,8 @@ Spring Boot 3.2 REST API with Java 17 and PostgreSQL 16.
 - **Conversation:** Always respond to my prompts, explain concepts in **Spanish**.
 - **Code:** All generated code, including class names, variables, methods, database columns, and inline comments, must be strictly in **English**.
 
+## Git Management
+
+**Commits** Never do a commit, you can give advise but dont do a commit
+
 
