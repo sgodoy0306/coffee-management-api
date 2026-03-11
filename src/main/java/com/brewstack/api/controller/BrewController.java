@@ -17,10 +17,14 @@ public class BrewController {
 
     private final BrewService brewService;
 
+    /**
+     * @deprecated Use POST /api/brew/order instead. This endpoint does not award XP.
+     */
+    @Deprecated
     @PostMapping("/{recipeId}")
     public ResponseEntity<Map<String, String>> brew(@PathVariable Long recipeId) {
         brewService.processBrew(recipeId);
-        return ResponseEntity.ok(Map.of("message", "Brew successful! Stock updated."));
+        return ResponseEntity.ok(Map.of("message", "Brew successful! Stock updated. WARNING: This endpoint is deprecated. Use POST /api/brew/order instead."));
     }
 
     @PostMapping("/order")

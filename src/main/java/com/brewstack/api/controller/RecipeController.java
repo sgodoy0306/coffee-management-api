@@ -37,7 +37,7 @@ public class RecipeController {
     @PutMapping("/{id}")
     public ResponseEntity<RecipeDTO> updateRecipe(@PathVariable Long id,
                                                   @Valid @RequestBody UpdateRecipeRequest request) {
-        return ResponseEntity.ok(recipeService.updateRecipe(id, request.name(), request.baseXpReward(), request.price()));
+        return ResponseEntity.ok(recipeService.updateRecipe(id, request.name(), request.baseXpReward(), request.price(), request.imageUrl()));
     }
 
     @DeleteMapping("/{id}")

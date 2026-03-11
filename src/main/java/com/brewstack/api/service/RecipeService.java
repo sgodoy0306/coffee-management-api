@@ -68,11 +68,12 @@ public class RecipeService {
     }
 
     @Transactional
-    public RecipeDTO updateRecipe(Long id, String name, Integer baseXpReward, BigDecimal price) {
+    public RecipeDTO updateRecipe(Long id, String name, Integer baseXpReward, BigDecimal price, String imageUrl) {
         Recipe recipe = findEntityById(id);
         recipe.setName(name);
         recipe.setBaseXpReward(baseXpReward);
         recipe.setPrice(price);
+        recipe.setImageUrl(imageUrl);
         return toDTO(recipeRepository.save(recipe));
     }
 
