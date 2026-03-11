@@ -10,6 +10,12 @@ services:
       - "4040:5432"
     volumes:
       - brewstack_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-brewstack} -d ${POSTGRES_DB:-coffeedb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   brewstack_data:
