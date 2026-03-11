@@ -33,20 +33,35 @@ public class BrewService {
     private final DailyBalanceRepository dailyBalanceRepository;
     private final BaristaRepository baristaRepository;
 
+    /**
+     * @deprecated This endpoint is deprecated. Use {@link #processOrder(OrderRequest)} instead.
+     *             This method does NOT award XP to any barista.
+     *             Retained for backwards compatibility only.
+     */
+    @Deprecated
     @Transactional
     public void processBrew(Long recipeId) {
+        log.warn("processBrew called for recipeId={}. This method is deprecated. Use processOrder instead.", recipeId);
+
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new RecipeNotFoundException(recipeId));
 
+        // Validate all stock first using pessimistic write lock (same atomicity guarantee as processOrder).
+        // findByIdWithLock issues SELECT ... FOR UPDATE, preventing race conditions under concurrent requests.
         for (RecipeIngredient recipeIngredient : recipe.getIngredients()) {
-            Ingredient ingredient = recipeIngredient.getIngredient();
+            Ingredient ingredient = ingredientRepository
+                    .findByIdWithLock(recipeIngredient.getIngredient().getId())
+                    .orElseThrow(() -> new InsufficientStockException(recipeIngredient.getIngredient().getName()));
             if (ingredient.getCurrentStock() < recipeIngredient.getQuantityRequired()) {
                 throw new InsufficientStockException(ingredient.getName());
             }
         }
 
+        // All checks passed — deduct stock. No XP is awarded (deprecated/legacy behaviour).
         for (RecipeIngredient recipeIngredient : recipe.getIngredients()) {
-            Ingredient ingredient = recipeIngredient.getIngredient();
+            Ingredient ingredient = ingredientRepository
+                    .findByIdWithLock(recipeIngredient.getIngredient().getId())
+                    .orElseThrow(() -> new InsufficientStockException(recipeIngredient.getIngredient().getName()));
             ingredient.setCurrentStock(ingredient.getCurrentStock() - recipeIngredient.getQuantityRequired());
             ingredientRepository.save(ingredient);
         }

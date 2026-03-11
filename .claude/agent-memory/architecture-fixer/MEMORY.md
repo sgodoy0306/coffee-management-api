@@ -108,6 +108,8 @@ No `RecipeIngredientRepository` exists. Correct teardown order: `recipeRepositor
 - `findByIdWithLock` (PESSIMISTIC_WRITE) is used in BOTH validation and deduction loops — mocks must stub it for both.
 - XP formula (R6 completed): extracted to `Barista.levelForXp(long xp)` static method. Both `BaristaService` and `BrewService` now call `Barista.levelForXp(barista.getTotalXp())`. Formula: `level = floor(sqrt(xp / 100.0)) + 1`.
 - In `addExperience`: `xpGained = rating * 50` (integer rating 1-10).
+- `processBrew` is `@Deprecated` (R7): uses same two-loop pessimistic lock pattern as `processOrder`, but intentionally does NOT award XP. Retained for backwards compatibility only.
+- `POST /api/brew/{recipeId}` response message explicitly warns caller to migrate to `POST /api/brew/order`.
 
 ## pom.xml Tooling Note
 
