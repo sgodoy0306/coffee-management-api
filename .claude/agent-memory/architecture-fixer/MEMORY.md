@@ -106,7 +106,7 @@ No `RecipeIngredientRepository` exists. Correct teardown order: `recipeRepositor
 - `processOrder` two-loop atomicity: ALL stock validation before ANY deduction.
 - If ANY ingredient fails check → `InsufficientStockException` → no `save()` calls at all.
 - `findByIdWithLock` (PESSIMISTIC_WRITE) is used in BOTH validation and deduction loops — mocks must stub it for both.
-- XP formula (duplicated in BrewService and BaristaService, R6 open): `level = floor(sqrt(totalXp / 100.0)) + 1`.
+- XP formula (R6 completed): extracted to `Barista.levelForXp(long xp)` static method. Both `BaristaService` and `BrewService` now call `Barista.levelForXp(barista.getTotalXp())`. Formula: `level = floor(sqrt(xp / 100.0)) + 1`.
 - In `addExperience`: `xpGained = rating * 50` (integer rating 1-10).
 
 ## pom.xml Tooling Note

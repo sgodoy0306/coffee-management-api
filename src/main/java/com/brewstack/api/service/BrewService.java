@@ -117,7 +117,7 @@ public class BrewService {
 
         // Grant XP to barista
         barista.setTotalXp(barista.getTotalXp() + xpGained);
-        int newLevel = (int) Math.floor(Math.sqrt(barista.getTotalXp() / 100.0)) + 1;
+        int newLevel = Barista.levelForXp(barista.getTotalXp());
         barista.setLevel(newLevel);
         baristaRepository.save(barista);
 
