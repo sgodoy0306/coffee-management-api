@@ -59,7 +59,7 @@ public class BaristaService {
         long xpGained = (long) rating * 50;
         barista.setTotalXp(barista.getTotalXp() + xpGained);
 
-        int newLevel = (int) Math.floor(Math.sqrt(barista.getTotalXp() / 100.0)) + 1;
+        int newLevel = Barista.levelForXp(barista.getTotalXp());
         barista.setLevel(newLevel);
 
         baristaRepository.save(barista);
