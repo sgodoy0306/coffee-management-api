@@ -52,6 +52,16 @@ Spring Boot 3.2 / Java 17 / PostgreSQL 16
 - `RecipeIngredient` → `recipe_ingredients`
 - `DailyBalance` → `daily_balances`
 
+## BigDecimal for Stock Quantities (R9 — completed)
+
+- `Ingredient.currentStock`, `Ingredient.minimumThreshold`, `RecipeIngredient.quantityRequired`, and `RestockRequest.amount()` are all `BigDecimal`.
+- `@Column(precision = 10, scale = 3)` is applied to all three entity fields.
+- Flyway migration `V2__alter_stock_quantities_to_numeric.sql` alters columns from `FLOAT8` to `NUMERIC(10,3)` with `USING` cast.
+- Always use `new BigDecimal("18.0")` string constructor in `DataInitializer` — NOT `BigDecimal.valueOf(18.0)`.
+- Comparisons use `.compareTo() < 0` (NOT `<`). Arithmetic uses `.subtract()` and `.add()` (NOT `-` or `+`).
+- When changing entity field types, ALWAYS check test files for `double` literals passed to constructors or setters — they must be updated to `BigDecimal` too.
+- AssertJ assertions on `BigDecimal` fields must use `.isEqualByComparingTo()`, NOT `.isEqualTo()` with a `double` literal (scale matters in `.equals()`).
+
 ## Test Infrastructure (confirmed working — 23 tests, 0 failures)
 
 - Testcontainers BOM version **1.19.3** is compatible with Spring Boot 3.2.
@@ -131,6 +141,7 @@ No `RecipeIngredientRepository` exists. Correct teardown order: `recipeRepositor
 - `ApiApplicationTests` was using `@SpringBootTest` without Testcontainers — caused connection failure since the app needs a real PostgreSQL DB.
 - Controllers injecting repositories directly — fixed in R5 for `StockController` and `FinancialController`.
 - Integration tests previously used H2 with PostgreSQL compatibility mode — replaced with real PostgreSQL via Testcontainers for production parity.
+- Tests constructing entities with `double` literals after a `Double` → `BigDecimal` migration — must scan ALL test files for `new Ingredient(...)`, `new RecipeIngredient(...)`, and setter calls when changing entity field types.
 
 ## Links to Detail Files
 

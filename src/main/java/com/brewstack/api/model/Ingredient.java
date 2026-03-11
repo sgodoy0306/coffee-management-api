@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "ingredients")
 @Data
@@ -18,9 +20,11 @@ public class Ingredient {
 
     private String name;
 
-    private Double currentStock;
+    @Column(precision = 10, scale = 3)
+    private BigDecimal currentStock;
 
-    private Double minimumThreshold;
+    @Column(precision = 10, scale = 3)
+    private BigDecimal minimumThreshold;
 
     private String unit;
 }

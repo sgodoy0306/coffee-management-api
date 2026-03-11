@@ -30,7 +30,7 @@ public class StockService {
         log.info("Restocking ingredient id={} by amount={}", id, request.amount());
         Ingredient ingredient = ingredientRepository.findById(id)
                 .orElseThrow(() -> new IngredientNotFoundException(id));
-        ingredient.setCurrentStock(ingredient.getCurrentStock() + request.amount());
+        ingredient.setCurrentStock(ingredient.getCurrentStock().add(request.amount()));
         Ingredient saved = ingredientRepository.save(ingredient);
         log.info("Ingredient id={} restocked successfully. New stock={}", id, saved.getCurrentStock());
         return saved;

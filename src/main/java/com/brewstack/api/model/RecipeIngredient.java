@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "recipe_ingredients")
 @Data
@@ -28,5 +30,6 @@ public class RecipeIngredient {
     @JoinColumn(name = "ingredient_id")
     private Ingredient ingredient;
 
-    private Double quantityRequired;
+    @Column(precision = 10, scale = 3)
+    private BigDecimal quantityRequired;
 }

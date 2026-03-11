@@ -64,8 +64,8 @@ class BrewServiceTest {
     void setUp() {
         barista = new Barista(1L, "Alice", 1, 0L);
 
-        espresso = new Ingredient(1L, "Espresso", 100.0, 10.0, "ml");
-        milk = new Ingredient(2L, "Milk", 500.0, 50.0, "ml");
+        espresso = new Ingredient(1L, "Espresso", new BigDecimal("100.0"), new BigDecimal("10.0"), "ml");
+        milk = new Ingredient(2L, "Milk", new BigDecimal("500.0"), new BigDecimal("50.0"), "ml");
 
         latte = new Recipe();
         latte.setId(10L);
@@ -73,8 +73,8 @@ class BrewServiceTest {
         latte.setPrice(new BigDecimal("4.50"));
         latte.setBaseXpReward(20);
 
-        ri1 = new RecipeIngredient(1L, latte, espresso, 30.0);
-        ri2 = new RecipeIngredient(2L, latte, milk, 150.0);
+        ri1 = new RecipeIngredient(1L, latte, espresso, new BigDecimal("30.0"));
+        ri2 = new RecipeIngredient(2L, latte, milk, new BigDecimal("150.0"));
         latte.setIngredients(List.of(ri1, ri2));
     }
 
@@ -130,8 +130,8 @@ class BrewServiceTest {
         verify(ingredientRepository).save(milk);
 
         // Stock values should have been decremented
-        assertThat(espresso.getCurrentStock()).isEqualTo(100.0 - 30.0);
-        assertThat(milk.getCurrentStock()).isEqualTo(500.0 - 150.0);
+        assertThat(espresso.getCurrentStock()).isEqualByComparingTo(new BigDecimal("70.0"));
+        assertThat(milk.getCurrentStock()).isEqualByComparingTo(new BigDecimal("350.0"));
     }
 
     // ── Barista not found ───────────────────────────────────────────────────
@@ -178,7 +178,7 @@ class BrewServiceTest {
     @DisplayName("processOrder — throws InsufficientStockException when stock is below required")
     void processOrder_insufficientStock_throwsInsufficientStockException() {
         // Arrange: espresso stock is lower than required (10 < 30)
-        espresso.setCurrentStock(10.0);
+        espresso.setCurrentStock(new BigDecimal("10.0"));
 
         OrderRequest request = new OrderRequest(List.of(10L), 1L);
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
@@ -200,7 +200,7 @@ class BrewServiceTest {
     @DisplayName("processOrder — atomicity: no ingredient is saved if ANY stock check fails")
     void processOrder_insufficientStockOnSecondIngredient_noIngredientSaved() {
         // Arrange: milk stock is lower than required (50 < 150)
-        milk.setCurrentStock(50.0);
+        milk.setCurrentStock(new BigDecimal("50.0"));
 
         OrderRequest request = new OrderRequest(List.of(10L), 1L);
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));

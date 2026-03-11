@@ -52,7 +52,7 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
         baristaId = barista.getId();
 
         Ingredient espresso = ingredientRepository.save(
-                new Ingredient(null, "Espresso", 500.0, 10.0, "ml"));
+                new Ingredient(null, "Espresso", new BigDecimal("500.0"), new BigDecimal("10.0"), "ml"));
 
         Recipe cappuccino = new Recipe();
         cappuccino.setName("Cappuccino");
@@ -61,7 +61,7 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
 
         RecipeIngredient ri = new RecipeIngredient();
         ri.setIngredient(espresso);
-        ri.setQuantityRequired(30.0);
+        ri.setQuantityRequired(new BigDecimal("30.0"));
         ri.setRecipe(cappuccino);
         cappuccino.setIngredients(List.of(ri));
 
@@ -102,7 +102,7 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("POST /api/brew/order — insufficient stock returns 400")
     void order_endpoint_insufficientStock_returns400() {
         Ingredient depleted = ingredientRepository.findByName("Espresso").orElseThrow();
-        depleted.setCurrentStock(5.0);
+        depleted.setCurrentStock(new BigDecimal("5.0"));
         ingredientRepository.save(depleted);
 
         String body = String.format("""

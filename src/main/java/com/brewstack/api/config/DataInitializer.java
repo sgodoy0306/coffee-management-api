@@ -24,46 +24,46 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        seedIngredientIfAbsent("Espresso Beans",   5000.0,  500.0, "grams");
-        seedIngredientIfAbsent("Whole Milk",       10000.0, 1000.0, "ml");
-        seedIngredientIfAbsent("Matcha Powder",    500.0,   100.0, "grams");
-        seedIngredientIfAbsent("Chocolate Powder", 1000.0,  150.0, "grams");
-        seedIngredientIfAbsent("Oat Milk",         8000.0,  1000.0, "ml");
-        seedIngredientIfAbsent("Water",            10000.0, 2000.0, "ml");
-        seedIngredientIfAbsent("Ice",              500.0,   100.0, "cubes");
+        seedIngredientIfAbsent("Espresso Beans",   new BigDecimal("5000.0"),  new BigDecimal("500.0"),  "grams");
+        seedIngredientIfAbsent("Whole Milk",       new BigDecimal("10000.0"), new BigDecimal("1000.0"), "ml");
+        seedIngredientIfAbsent("Matcha Powder",    new BigDecimal("500.0"),   new BigDecimal("100.0"),  "grams");
+        seedIngredientIfAbsent("Chocolate Powder", new BigDecimal("1000.0"),  new BigDecimal("150.0"),  "grams");
+        seedIngredientIfAbsent("Oat Milk",         new BigDecimal("8000.0"),  new BigDecimal("1000.0"), "ml");
+        seedIngredientIfAbsent("Water",            new BigDecimal("10000.0"), new BigDecimal("2000.0"), "ml");
+        seedIngredientIfAbsent("Ice",              new BigDecimal("500.0"),   new BigDecimal("100.0"),  "cubes");
 
         seedRecipeIfAbsent("Espresso",    10, new BigDecimal("3.50"), List.of(
-                ri("Espresso Beans", 18.0)
+                ri("Espresso Beans", new BigDecimal("18.0"))
         ));
         seedRecipeIfAbsent("Latte",       25, new BigDecimal("5.50"), List.of(
-                ri("Espresso Beans", 18.0),
-                ri("Whole Milk",     200.0)
+                ri("Espresso Beans", new BigDecimal("18.0")),
+                ri("Whole Milk",     new BigDecimal("200.0"))
         ));
         seedRecipeIfAbsent("Flat White",  30, new BigDecimal("5.00"), List.of(
-                ri("Espresso Beans", 18.0),
-                ri("Whole Milk",     150.0)
+                ri("Espresso Beans", new BigDecimal("18.0")),
+                ri("Whole Milk",     new BigDecimal("150.0"))
         ));
         seedRecipeIfAbsent("Cappuccino",  25, new BigDecimal("5.00"), List.of(
-                ri("Espresso Beans", 18.0),
-                ri("Whole Milk",     150.0)
+                ri("Espresso Beans", new BigDecimal("18.0")),
+                ri("Whole Milk",     new BigDecimal("150.0"))
         ));
         seedRecipeIfAbsent("Matcha Latte", 35, new BigDecimal("6.50"), List.of(
-                ri("Matcha Powder", 5.0),
-                ri("Oat Milk",      200.0)
+                ri("Matcha Powder", new BigDecimal("5.0")),
+                ri("Oat Milk",      new BigDecimal("200.0"))
         ));
         seedRecipeIfAbsent("Mocha",       30, new BigDecimal("6.00"), List.of(
-                ri("Espresso Beans",    18.0),
-                ri("Chocolate Powder",  15.0),
-                ri("Whole Milk",        150.0)
+                ri("Espresso Beans",    new BigDecimal("18.0")),
+                ri("Chocolate Powder",  new BigDecimal("15.0")),
+                ri("Whole Milk",        new BigDecimal("150.0"))
         ));
         seedRecipeIfAbsent("Iced Americano", 15, new BigDecimal("4.50"), List.of(
-                ri("Espresso Beans", 18.0),
-                ri("Water",          200.0),
-                ri("Ice",            3.0)
+                ri("Espresso Beans", new BigDecimal("18.0")),
+                ri("Water",          new BigDecimal("200.0")),
+                ri("Ice",            new BigDecimal("3.0"))
         ));
     }
 
-    private void seedIngredientIfAbsent(String name, double currentStock, double minimumThreshold, String unit) {
+    private void seedIngredientIfAbsent(String name, BigDecimal currentStock, BigDecimal minimumThreshold, String unit) {
         if (!ingredientRepository.existsByName(name)) {
             ingredientRepository.save(new Ingredient(null, name, currentStock, minimumThreshold, unit));
         }
@@ -82,7 +82,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     /** Builds a RecipeIngredient stub — recipe reference is set later in seedRecipeIfAbsent. */
-    private RecipeIngredient ri(String ingredientName, double quantity) {
+    private RecipeIngredient ri(String ingredientName, BigDecimal quantity) {
         Ingredient ingredient = ingredientRepository.findByName(ingredientName)
                 .orElseThrow(() -> new IngredientNotFoundException(ingredientName));
         return new RecipeIngredient(null, null, ingredient, quantity);

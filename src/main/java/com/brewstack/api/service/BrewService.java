@@ -52,7 +52,7 @@ public class BrewService {
             Ingredient ingredient = ingredientRepository
                     .findByIdWithLock(recipeIngredient.getIngredient().getId())
                     .orElseThrow(() -> new InsufficientStockException(recipeIngredient.getIngredient().getName()));
-            if (ingredient.getCurrentStock() < recipeIngredient.getQuantityRequired()) {
+            if (ingredient.getCurrentStock().compareTo(recipeIngredient.getQuantityRequired()) < 0) {
                 throw new InsufficientStockException(ingredient.getName());
             }
         }
@@ -62,7 +62,7 @@ public class BrewService {
             Ingredient ingredient = ingredientRepository
                     .findByIdWithLock(recipeIngredient.getIngredient().getId())
                     .orElseThrow(() -> new InsufficientStockException(recipeIngredient.getIngredient().getName()));
-            ingredient.setCurrentStock(ingredient.getCurrentStock() - recipeIngredient.getQuantityRequired());
+            ingredient.setCurrentStock(ingredient.getCurrentStock().subtract(recipeIngredient.getQuantityRequired()));
             ingredientRepository.save(ingredient);
         }
 
@@ -97,7 +97,7 @@ public class BrewService {
                 Ingredient ingredient = ingredientRepository
                         .findByIdWithLock(ri.getIngredient().getId())
                         .orElseThrow(() -> new InsufficientStockException(ri.getIngredient().getName()));
-                if (ingredient.getCurrentStock() < ri.getQuantityRequired()) {
+                if (ingredient.getCurrentStock().compareTo(ri.getQuantityRequired()) < 0) {
                     throw new InsufficientStockException(ingredient.getName());
                 }
             }
@@ -113,7 +113,7 @@ public class BrewService {
                 Ingredient ingredient = ingredientRepository
                         .findByIdWithLock(ri.getIngredient().getId())
                         .orElseThrow(() -> new InsufficientStockException(ri.getIngredient().getName()));
-                ingredient.setCurrentStock(ingredient.getCurrentStock() - ri.getQuantityRequired());
+                ingredient.setCurrentStock(ingredient.getCurrentStock().subtract(ri.getQuantityRequired()));
                 ingredientRepository.save(ingredient);
             }
             BigDecimal price = recipe.getPrice() != null ? recipe.getPrice() : BigDecimal.ZERO;
