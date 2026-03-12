@@ -148,6 +148,9 @@ public class BrewService {
         barista.setLevel(newLevel);
         baristaRepository.save(barista);
 
+        log.info("Order processed: baristaId={} recipes={} revenue={} newLevel={}",
+                request.baristaId(), brewedNames, orderRevenue, newLevel);
+
         return new OrderSummaryDTO(brewedNames, orderRevenue, recipes.size(), barista.getTotalXp(), newLevel);
     }
 }
