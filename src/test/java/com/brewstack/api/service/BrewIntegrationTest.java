@@ -99,8 +99,8 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/brew/order — insufficient stock returns 400")
-    void order_endpoint_insufficientStock_returns400() {
+    @DisplayName("POST /api/brew/order — insufficient stock returns 409")
+    void order_endpoint_insufficientStock_returns409() {
         Ingredient depleted = ingredientRepository.findByName("Espresso").orElseThrow();
         depleted.setCurrentStock(new BigDecimal("5.0"));
         ingredientRepository.save(depleted);
@@ -122,8 +122,7 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
                 String.class
         );
 
-        // TODO: update to 409 when R15 is implemented
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test

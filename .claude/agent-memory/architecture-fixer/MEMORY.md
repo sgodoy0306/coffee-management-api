@@ -73,7 +73,7 @@ Spring Boot 3.2 / Java 17 / PostgreSQL 16
 - Unit tests: `@ExtendWith(MockitoExtension.class)` + `@InjectMocks` + `@Mock`. No Spring context loaded — fast.
 - `BrewIntegrationTest` and `BaristaIntegrationTest` both extend `AbstractIntegrationTest`.
 - `BaristaIntegrationTest` has `@BeforeEach baristaRepository.deleteAll()` to prevent ID collisions between tests.
-- `InsufficientStockException` currently maps to HTTP 400. TODO R15: migrate to 409 Conflict (comment placed in test).
+- `InsufficientStockException` maps to HTTP 409 Conflict (R15 implemented). `BrewIntegrationTest` assertion updated to `HttpStatus.CONFLICT` (R18 implemented).
 
 ### Singleton Container Pattern for AbstractIntegrationTest (confirmed working — use this)
 
@@ -142,6 +142,7 @@ No `RecipeIngredientRepository` exists. Correct teardown order: `recipeRepositor
 - Controllers injecting repositories directly — fixed in R5 for `StockController` and `FinancialController`.
 - Integration tests previously used H2 with PostgreSQL compatibility mode — replaced with real PostgreSQL via Testcontainers for production parity.
 - Tests constructing entities with `double` literals after a `Double` → `BigDecimal` migration — must scan ALL test files for `new Ingredient(...)`, `new RecipeIngredient(...)`, and setter calls when changing entity field types.
+- Stale TODO comments in tests that reference unreleased items (e.g., "TODO: update when R15 is implemented") — when the referenced fix lands, the TODO and the assertion must be updated together. A test asserting the old (wrong) status code with a pending TODO is more dangerous than no test at all: it passes when the code has the bug and fails when the code is correct.
 
 ## Links to Detail Files
 
