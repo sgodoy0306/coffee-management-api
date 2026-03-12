@@ -37,13 +37,15 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(404, "Daily Balance Not Found", ex.getMessage()));
     }
 
-    // ── 400 Bad Request ──────────────────────────────────────────────────────
+    // ── 409 Conflict ─────────────────────────────────────────────────────────
 
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<ErrorResponse> handleInsufficientStock(InsufficientStockException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.of(400, "Insufficient Stock", ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(409, "Insufficient Stock", ex.getMessage()));
     }
+
+    // ── 400 Bad Request ──────────────────────────────────────────────────────
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
