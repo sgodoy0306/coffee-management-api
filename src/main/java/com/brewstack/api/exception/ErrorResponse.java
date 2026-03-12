@@ -3,12 +3,13 @@ package com.brewstack.api.exception;
 import java.time.LocalDateTime;
 
 public record ErrorResponse(
+        LocalDateTime timestamp,
         int status,
         String error,
         String message,
-        LocalDateTime timestamp
+        String path
 ) {
-    public static ErrorResponse of(int status, String error, String message) {
-        return new ErrorResponse(status, error, message, LocalDateTime.now());
+    public static ErrorResponse of(int status, String error, String message, String path) {
+        return new ErrorResponse(LocalDateTime.now(), status, error, message, path);
     }
 }

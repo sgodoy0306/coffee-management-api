@@ -156,6 +156,14 @@ All entities must be mapped to DTOs before leaving the service layer. The `toDTO
 
 The `toDTO()` method is always `private` and lives in the service, not the entity. Controllers must never receive or return raw JPA entities.
 
+## ErrorResponse Contract (R20 — completed)
+
+- `ErrorResponse` record fields (in order): `LocalDateTime timestamp`, `int status`, `String error`, `String message`, `String path`.
+- The `timestamp` field is first — matches the JSON contract defined in `CLAUDE.md`.
+- Factory method signature: `ErrorResponse.of(int status, String error, String message, String path)`.
+- All `@ExceptionHandler` methods in `GlobalExceptionHandler` receive `HttpServletRequest request` as a second parameter and call `request.getRequestURI()` to populate `path`.
+- Spring MVC resolves `HttpServletRequest` automatically as a method parameter in `@ExceptionHandler` — no field injection or `@Autowired` needed.
+
 ## Links to Detail Files
 
 - (none yet)
