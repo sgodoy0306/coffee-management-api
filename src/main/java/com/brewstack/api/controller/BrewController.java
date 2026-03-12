@@ -3,6 +3,7 @@ package com.brewstack.api.controller;
 import com.brewstack.api.dto.OrderRequest;
 import com.brewstack.api.dto.OrderSummaryDTO;
 import com.brewstack.api.service.BrewService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ public class BrewController {
      * @deprecated Use POST /api/brew/order instead. This endpoint does not award XP.
      */
     @Deprecated
+    @Operation(deprecated = true)
     @PostMapping("/{recipeId}")
     public ResponseEntity<Map<String, String>> brew(@PathVariable Long recipeId) {
         brewService.processBrew(recipeId);
