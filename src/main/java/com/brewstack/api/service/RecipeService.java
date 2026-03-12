@@ -25,11 +25,11 @@ public class RecipeService {
     private final IngredientRepository ingredientRepository;
 
     public List<RecipeDTO> findAll() {
-        return recipeRepository.findAll().stream().map(this::toDTO).toList();
+        return recipeRepository.findAllWithIngredients().stream().map(this::toDTO).toList();
     }
 
     public RecipeDTO findById(Long id) {
-        return toDTO(recipeRepository.findById(id)
+        return toDTO(recipeRepository.findByIdWithIngredients(id)
                 .orElseThrow(() -> new RecipeNotFoundException(id)));
     }
 
@@ -63,7 +63,7 @@ public class RecipeService {
     }
 
     private Recipe findEntityById(Long id) {
-        return recipeRepository.findById(id)
+        return recipeRepository.findByIdWithIngredients(id)
                 .orElseThrow(() -> new RecipeNotFoundException(id));
     }
 

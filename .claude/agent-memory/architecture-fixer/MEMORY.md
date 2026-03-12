@@ -164,6 +164,14 @@ The `toDTO()` method is always `private` and lives in the service, not the entit
 - All `@ExceptionHandler` methods in `GlobalExceptionHandler` receive `HttpServletRequest request` as a second parameter and call `request.getRequestURI()` to populate `path`.
 - Spring MVC resolves `HttpServletRequest` automatically as a method parameter in `@ExceptionHandler` — no field injection or `@Autowired` needed.
 
+## N+1 Query Fix Pattern (R21 — completed)
+
+- `RecipeRepository` now has `findAllWithIngredients()` and `findByIdWithIngredients(@Param("id") Long id)` using `@Query` with `JOIN FETCH`.
+- JPQL: `SELECT r FROM Recipe r JOIN FETCH r.ingredients ri JOIN FETCH ri.ingredient` — double `JOIN FETCH` needed because `toDTO()` traverses two levels: `Recipe → RecipeIngredient → Ingredient`.
+- `RecipeService.findAll()`, `findById()`, and `findEntityById()` all use the fetching variants — `recipeRepository.findAll()` and `recipeRepository.findById()` are never called in this service.
+- When a service's `toDTO()` traverses a `@OneToMany` collection AND a nested `@ManyToOne` inside it, both joins must be fetched in the same query to avoid two rounds of N+1.
+- Context7 confirmed `@EntityGraph(attributePaths = {...})` as an alternative, but `@Query` with `JOIN FETCH` was chosen for explicitness and because the JPQL matches what was documented in the architecture plan.
+
 ## Links to Detail Files
 
 - (none yet)
