@@ -1,10 +1,10 @@
 package com.brewstack.api.controller;
 
+import com.brewstack.api.dto.BaristaDTO;
 import com.brewstack.api.dto.CreateBaristaRequest;
 import com.brewstack.api.dto.LevelUpDTO;
 import com.brewstack.api.dto.PracticeRequest;
 import com.brewstack.api.dto.UpdateBaristaRequest;
-import com.brewstack.api.model.Barista;
 import com.brewstack.api.service.BaristaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,24 +24,24 @@ public class BaristaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Barista>> getAllBaristas() {
+    public ResponseEntity<List<BaristaDTO>> getAllBaristas() {
         return ResponseEntity.ok(baristaService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Barista> getBarista(@PathVariable Long id) {
+    public ResponseEntity<BaristaDTO> getBarista(@PathVariable Long id) {
         return ResponseEntity.ok(baristaService.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Barista> createBarista(@Valid @RequestBody CreateBaristaRequest request) {
-        Barista barista = baristaService.createBarista(request.name());
+    public ResponseEntity<BaristaDTO> createBarista(@Valid @RequestBody CreateBaristaRequest request) {
+        BaristaDTO barista = baristaService.createBarista(request.name());
         return ResponseEntity.status(HttpStatus.CREATED).body(barista);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Barista> updateBarista(@PathVariable Long id,
-                                                 @Valid @RequestBody UpdateBaristaRequest request) {
+    public ResponseEntity<BaristaDTO> updateBarista(@PathVariable Long id,
+                                                    @Valid @RequestBody UpdateBaristaRequest request) {
         return ResponseEntity.ok(baristaService.updateBarista(id, request.name()));
     }
 

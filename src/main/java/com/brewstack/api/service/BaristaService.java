@@ -1,5 +1,6 @@
 package com.brewstack.api.service;
 
+import com.brewstack.api.dto.BaristaDTO;
 import com.brewstack.api.dto.LevelUpDTO;
 import com.brewstack.api.exception.BaristaNotFoundException;
 import com.brewstack.api.model.Barista;
@@ -18,28 +19,36 @@ public class BaristaService {
         this.baristaRepository = baristaRepository;
     }
 
-    public List<Barista> findAll() {
-        return baristaRepository.findAll();
+    public List<BaristaDTO> findAll() {
+        return baristaRepository.findAll().stream()
+                .map(this::toDTO)
+                .toList();
     }
 
-    public Barista findById(Long id) {
-        return baristaRepository.findById(id)
+    public BaristaDTO findById(Long id) {
+        Barista barista = baristaRepository.findById(id)
                 .orElseThrow(() -> new BaristaNotFoundException(id));
+        return toDTO(barista);
     }
 
-    public Barista createBarista(String name) {
+    public BaristaDTO createBarista(String name) {
         Barista barista = new Barista();
         barista.setName(name);
         barista.setLevel(1);
         barista.setTotalXp(0L);
-        return baristaRepository.save(barista);
+        return toDTO(baristaRepository.save(barista));
     }
 
     @Transactional
-    public Barista updateBarista(Long id, String name) {
-        Barista barista = findById(id);
+    public BaristaDTO updateBarista(Long id, String name) {
+        Barista barista = baristaRepository.findById(id)
+                .orElseThrow(() -> new BaristaNotFoundException(id));
         barista.setName(name);
-        return baristaRepository.save(barista);
+        return toDTO(baristaRepository.save(barista));
+    }
+
+    private BaristaDTO toDTO(Barista barista) {
+        return new BaristaDTO(barista.getId(), barista.getName(), barista.getLevel(), barista.getTotalXp());
     }
 
     public void deleteBarista(Long id) {
