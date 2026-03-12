@@ -6,10 +6,10 @@ import com.brewstack.api.exception.IngredientNotFoundException;
 import com.brewstack.api.model.Ingredient;
 import com.brewstack.api.repository.IngredientRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -21,11 +21,9 @@ public class StockService {
         this.ingredientRepository = ingredientRepository;
     }
 
-    public List<IngredientDTO> getAllStock() {
-        log.debug("Fetching all ingredient stock levels");
-        return ingredientRepository.findAll().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<IngredientDTO> getAllStock(Pageable pageable) {
+        log.debug("Fetching ingredient stock levels - page={} size={}", pageable.getPageNumber(), pageable.getPageSize());
+        return ingredientRepository.findAll(pageable).map(this::toDTO);
     }
 
     @Transactional

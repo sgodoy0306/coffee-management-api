@@ -5,10 +5,11 @@ import com.brewstack.api.dto.RestockRequest;
 import com.brewstack.api.service.StockService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/stock")
@@ -18,8 +19,9 @@ public class StockController {
     private final StockService stockService;
 
     @GetMapping
-    public ResponseEntity<List<IngredientDTO>> getAllStock() {
-        return ResponseEntity.ok(stockService.getAllStock());
+    public ResponseEntity<Page<IngredientDTO>> getAllStock(
+            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+        return ResponseEntity.ok(stockService.getAllStock(pageable));
     }
 
     @PatchMapping("/{id}/restock")
