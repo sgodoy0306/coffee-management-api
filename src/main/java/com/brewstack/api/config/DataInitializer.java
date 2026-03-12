@@ -8,6 +8,7 @@ import com.brewstack.api.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.brewstack.api.exception.IngredientNotFoundException;
 
@@ -23,6 +24,7 @@ public class DataInitializer implements CommandLineRunner {
     private final RecipeRepository recipeRepository;
 
     @Override
+    @Transactional
     public void run(String... args) {
         seedIngredientIfAbsent("Espresso Beans",   new BigDecimal("5000.0"),  new BigDecimal("500.0"),  "grams");
         seedIngredientIfAbsent("Whole Milk",       new BigDecimal("10000.0"), new BigDecimal("1000.0"), "ml");
