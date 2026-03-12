@@ -91,7 +91,7 @@ class BrewServiceTest {
         // Validation loop
         given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(espresso));
         given(ingredientRepository.findByIdWithLock(2L)).willReturn(Optional.of(milk));
-        // Deduction loop reuses the same mock; stock was already mutated by validation loop
+        // Deduction loop reuses the Map built during validation — findByIdWithLock is called once per ingredient (R23)
         given(dailyBalanceRepository.findById(LocalDate.now()))
                 .willReturn(Optional.of(new DailyBalance(LocalDate.now(), BigDecimal.ZERO, 0)));
         given(baristaRepository.save(any(Barista.class))).willAnswer(inv -> inv.getArgument(0));
