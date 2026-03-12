@@ -1,5 +1,6 @@
 package com.brewstack.api.service;
 
+import com.brewstack.api.dto.IngredientDTO;
 import com.brewstack.api.dto.RestockRequest;
 import com.brewstack.api.exception.IngredientNotFoundException;
 import com.brewstack.api.model.Ingredient;
@@ -20,19 +21,31 @@ public class StockService {
         this.ingredientRepository = ingredientRepository;
     }
 
-    public List<Ingredient> getAllStock() {
+    public List<IngredientDTO> getAllStock() {
         log.debug("Fetching all ingredient stock levels");
-        return ingredientRepository.findAll();
+        return ingredientRepository.findAll().stream()
+                .map(this::toDTO)
+                .toList();
     }
 
     @Transactional
-    public Ingredient restock(Long id, RestockRequest request) {
+    public IngredientDTO restock(Long id, RestockRequest request) {
         log.info("Restocking ingredient id={} by amount={}", id, request.amount());
         Ingredient ingredient = ingredientRepository.findById(id)
                 .orElseThrow(() -> new IngredientNotFoundException(id));
         ingredient.setCurrentStock(ingredient.getCurrentStock().add(request.amount()));
         Ingredient saved = ingredientRepository.save(ingredient);
         log.info("Ingredient id={} restocked successfully. New stock={}", id, saved.getCurrentStock());
-        return saved;
+        return toDTO(saved);
+    }
+
+    private IngredientDTO toDTO(Ingredient ingredient) {
+        return new IngredientDTO(
+                ingredient.getId(),
+                ingredient.getName(),
+                ingredient.getCurrentStock(),
+                ingredient.getMinimumThreshold(),
+                ingredient.getUnit()
+        );
     }
 }

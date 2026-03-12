@@ -143,6 +143,18 @@ No `RecipeIngredientRepository` exists. Correct teardown order: `recipeRepositor
 - Integration tests previously used H2 with PostgreSQL compatibility mode — replaced with real PostgreSQL via Testcontainers for production parity.
 - Tests constructing entities with `double` literals after a `Double` → `BigDecimal` migration — must scan ALL test files for `new Ingredient(...)`, `new RecipeIngredient(...)`, and setter calls when changing entity field types.
 - Stale TODO comments in tests that reference unreleased items (e.g., "TODO: update when R15 is implemented") — when the referenced fix lands, the TODO and the assertion must be updated together. A test asserting the old (wrong) status code with a pending TODO is more dangerous than no test at all: it passes when the code has the bug and fails when the code is correct.
+- When a type migration (e.g., `Double` → `BigDecimal`) is applied to entities, ALL related DTOs must also be updated: both request DTOs (`RecipeIngredientRequest.quantity`) and response DTOs (`RecipeIngredientDTO.quantityRequired`). Partial migrations leave the project uncompilable. Always grep for `Double` in `dto/` after any BigDecimal entity migration.
+- `@Slf4j` annotation can be missing from a class even when `lombok.extern.slf4j.Slf4j` is imported — the import alone does not activate the annotation processor. If `log` is unresolved at compile time, verify the class-level `@Slf4j` annotation is present.
+
+## DTO Mapping Pattern (R11, R19 — confirmed)
+
+All entities must be mapped to DTOs before leaving the service layer. The `toDTO(Entity e)` private method pattern is established:
+- `BaristaService.toDTO(Barista)` → `BaristaDTO`
+- `RecipeService.toDTO(Recipe)` → `RecipeDTO`
+- `StockService.toDTO(Ingredient)` → `IngredientDTO` (R19)
+- `FinancialService.toDTO(DailyBalance)` → `DailyBalanceDTO` (R19)
+
+The `toDTO()` method is always `private` and lives in the service, not the entity. Controllers must never receive or return raw JPA entities.
 
 ## Links to Detail Files
 

@@ -1,6 +1,6 @@
 package com.brewstack.api.controller;
 
-import com.brewstack.api.model.DailyBalance;
+import com.brewstack.api.dto.DailyBalanceDTO;
 import com.brewstack.api.service.FinancialService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +18,12 @@ public class FinancialController {
     private final FinancialService financialService;
 
     @GetMapping("/daily-report")
-    public ResponseEntity<DailyBalance> getDailyReport() {
+    public ResponseEntity<DailyBalanceDTO> getDailyReport() {
         return ResponseEntity.ok(financialService.getDailyReport());
     }
 
     @GetMapping("/history")
-    public ResponseEntity<List<DailyBalance>> getHistory() {
+    public ResponseEntity<List<DailyBalanceDTO>> getHistory() {
         return ResponseEntity.ok(financialService.getHistory());
     }
 }
