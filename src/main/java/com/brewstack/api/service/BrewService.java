@@ -22,7 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -49,20 +51,24 @@ public class BrewService {
 
         // Validate all stock first using pessimistic write lock (same atomicity guarantee as processOrder).
         // findByIdWithLock issues SELECT ... FOR UPDATE, preventing race conditions under concurrent requests.
+        // Locked references are stored in a Map so the deduction loop reuses the same in-memory objects
+        // instead of issuing a second SELECT ... FOR UPDATE per ingredient (R23 fix).
+        Map<Long, Ingredient> lockedIngredients = new HashMap<>();
         for (RecipeIngredient recipeIngredient : recipe.getIngredients()) {
+            Long ingredientId = recipeIngredient.getIngredient().getId();
             Ingredient ingredient = ingredientRepository
-                    .findByIdWithLock(recipeIngredient.getIngredient().getId())
+                    .findByIdWithLock(ingredientId)
                     .orElseThrow(() -> new InsufficientStockException(recipeIngredient.getIngredient().getName()));
+            lockedIngredients.put(ingredientId, ingredient);
             if (ingredient.getCurrentStock().compareTo(recipeIngredient.getQuantityRequired()) < 0) {
                 throw new InsufficientStockException(ingredient.getName());
             }
         }
 
         // All checks passed — deduct stock. No XP is awarded (deprecated/legacy behaviour).
+        // Reuse the locked references from the validation loop — no additional SELECT FOR UPDATE issued.
         for (RecipeIngredient recipeIngredient : recipe.getIngredients()) {
-            Ingredient ingredient = ingredientRepository
-                    .findByIdWithLock(recipeIngredient.getIngredient().getId())
-                    .orElseThrow(() -> new InsufficientStockException(recipeIngredient.getIngredient().getName()));
+            Ingredient ingredient = lockedIngredients.get(recipeIngredient.getIngredient().getId());
             ingredient.setCurrentStock(ingredient.getCurrentStock().subtract(recipeIngredient.getQuantityRequired()));
             ingredientRepository.save(ingredient);
         }
@@ -93,27 +99,32 @@ public class BrewService {
         // Validate stock for every item before touching anything (atomicity).
         // findByIdWithLock issues SELECT ... FOR UPDATE, preventing concurrent
         // transactions from reading the same stock value and both passing validation.
+        // Locked references are stored in a Map keyed by ingredient ID so the deduction
+        // loop can reuse the same in-memory objects without issuing a second
+        // SELECT ... FOR UPDATE per ingredient (R23 fix: reduces 2×N locks to N locks).
+        Map<Long, Ingredient> lockedIngredients = new HashMap<>();
         for (Recipe recipe : recipes) {
             for (RecipeIngredient ri : recipe.getIngredients()) {
-                Ingredient ingredient = ingredientRepository
-                        .findByIdWithLock(ri.getIngredient().getId())
-                        .orElseThrow(() -> new InsufficientStockException(ri.getIngredient().getName()));
+                Long ingredientId = ri.getIngredient().getId();
+                Ingredient ingredient = lockedIngredients.computeIfAbsent(ingredientId,
+                        id -> ingredientRepository
+                                .findByIdWithLock(id)
+                                .orElseThrow(() -> new InsufficientStockException(ri.getIngredient().getName())));
                 if (ingredient.getCurrentStock().compareTo(ri.getQuantityRequired()) < 0) {
                     throw new InsufficientStockException(ingredient.getName());
                 }
             }
         }
 
-        // All checks passed — deduct stock and accumulate revenue + XP
+        // All checks passed — deduct stock and accumulate revenue + XP.
+        // Reuse the locked references from the validation map — no additional SELECT FOR UPDATE issued.
         BigDecimal orderRevenue = BigDecimal.ZERO;
         long xpGained = 0L;
         List<String> brewedNames = new ArrayList<>();
 
         for (Recipe recipe : recipes) {
             for (RecipeIngredient ri : recipe.getIngredients()) {
-                Ingredient ingredient = ingredientRepository
-                        .findByIdWithLock(ri.getIngredient().getId())
-                        .orElseThrow(() -> new InsufficientStockException(ri.getIngredient().getName()));
+                Ingredient ingredient = lockedIngredients.get(ri.getIngredient().getId());
                 ingredient.setCurrentStock(ingredient.getCurrentStock().subtract(ri.getQuantityRequired()));
                 ingredientRepository.save(ingredient);
             }
