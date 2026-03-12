@@ -5,6 +5,7 @@ import com.brewstack.api.dto.RestockRequest;
 import com.brewstack.api.exception.IngredientNotFoundException;
 import com.brewstack.api.model.Ingredient;
 import com.brewstack.api.repository.IngredientRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,14 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class StockService {
 
     private final IngredientRepository ingredientRepository;
-
-    public StockService(IngredientRepository ingredientRepository) {
-        this.ingredientRepository = ingredientRepository;
-    }
 
     public Page<IngredientDTO> getAllStock(Pageable pageable) {
         log.debug("Fetching ingredient stock levels - page={} size={}", pageable.getPageNumber(), pageable.getPageSize());

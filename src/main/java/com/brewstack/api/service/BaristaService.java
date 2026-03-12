@@ -5,19 +5,17 @@ import com.brewstack.api.dto.LevelUpDTO;
 import com.brewstack.api.exception.BaristaNotFoundException;
 import com.brewstack.api.model.Barista;
 import com.brewstack.api.repository.BaristaRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @Service
 public class BaristaService {
 
     private final BaristaRepository baristaRepository;
-
-    public BaristaService(BaristaRepository baristaRepository) {
-        this.baristaRepository = baristaRepository;
-    }
 
     public List<BaristaDTO> findAll() {
         return baristaRepository.findAll().stream()

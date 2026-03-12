@@ -173,6 +173,15 @@ The `toDTO()` method is always `private` and lives in the service, not the entit
 - When a service's `toDTO()` traverses a `@OneToMany` collection AND a nested `@ManyToOne` inside it, both joins must be fetched in the same query to avoid two rounds of N+1.
 - Context7 confirmed `@EntityGraph(attributePaths = {...})` as an alternative, but `@Query` with `JOIN FETCH` was chosen for explicitness and because the JPQL matches what was documented in the architecture plan.
 
+## Constructor Injection Pattern (R24 — completed)
+
+- ALL controllers and services MUST use `@RequiredArgsConstructor` from Lombok. No manual constructors.
+- The four classes that had manual constructors (corrected in R24): `BaristaController`, `BaristaService`, `StockService`, `FinancialService`.
+- Correct import: `import lombok.RequiredArgsConstructor;` — place annotation at class level above `@Service` / `@RestController`.
+- Fields remain `private final` — Lombok generates the constructor from them automatically.
+- When `@Slf4j` is also present, the canonical order is: `@Slf4j` first, then `@RequiredArgsConstructor`, then the Spring stereotype annotation (`@Service`, `@RestController`, etc.).
+- Manual constructors in Spring beans are a maintenance hazard: a developer adding a new `final` field following the project's pattern will cause a duplicate-constructor compile error that does not clearly point to the root cause.
+
 ## Links to Detail Files
 
 - (none yet)
