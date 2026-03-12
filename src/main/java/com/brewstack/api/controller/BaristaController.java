@@ -7,21 +7,19 @@ import com.brewstack.api.dto.PracticeRequest;
 import com.brewstack.api.dto.UpdateBaristaRequest;
 import com.brewstack.api.service.BaristaService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/baristas")
 public class BaristaController {
 
     private final BaristaService baristaService;
-
-    public BaristaController(BaristaService baristaService) {
-        this.baristaService = baristaService;
-    }
 
     @GetMapping
     public ResponseEntity<List<BaristaDTO>> getAllBaristas() {

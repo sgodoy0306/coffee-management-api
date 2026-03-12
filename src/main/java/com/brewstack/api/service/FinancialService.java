@@ -3,6 +3,7 @@ package com.brewstack.api.service;
 import com.brewstack.api.dto.DailyBalanceDTO;
 import com.brewstack.api.model.DailyBalance;
 import com.brewstack.api.repository.DailyBalanceRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -11,14 +12,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class FinancialService {
 
     private final DailyBalanceRepository dailyBalanceRepository;
-
-    public FinancialService(DailyBalanceRepository dailyBalanceRepository) {
-        this.dailyBalanceRepository = dailyBalanceRepository;
-    }
 
     public DailyBalanceDTO getDailyReport() {
         LocalDate today = LocalDate.now();
