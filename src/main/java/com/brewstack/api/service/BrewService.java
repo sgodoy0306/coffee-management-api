@@ -36,54 +36,6 @@ public class BrewService {
     private final DailyBalanceRepository dailyBalanceRepository;
     private final BaristaRepository baristaRepository;
 
-    /**
-     * @deprecated This endpoint is deprecated. Use {@link #processOrder(OrderRequest)} instead.
-     *             This method does NOT award XP to any barista.
-     *             Retained for backwards compatibility only.
-     */
-    @Deprecated
-    @Transactional
-    public void processBrew(Long recipeId) {
-        log.warn("processBrew called for recipeId={}. This method is deprecated. Use processOrder instead.", recipeId);
-
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new RecipeNotFoundException(recipeId));
-
-        // Validate all stock first using pessimistic write lock (same atomicity guarantee as processOrder).
-        // findByIdWithLock issues SELECT ... FOR UPDATE, preventing race conditions under concurrent requests.
-        // Locked references are stored in a Map so the deduction loop reuses the same in-memory objects
-        // instead of issuing a second SELECT ... FOR UPDATE per ingredient (R23 fix).
-        Map<Long, Ingredient> lockedIngredients = new HashMap<>();
-        for (RecipeIngredient recipeIngredient : recipe.getIngredients()) {
-            Long ingredientId = recipeIngredient.getIngredient().getId();
-            Ingredient ingredient = ingredientRepository
-                    .findByIdWithLock(ingredientId)
-                    .orElseThrow(() -> new InsufficientStockException(recipeIngredient.getIngredient().getName()));
-            lockedIngredients.put(ingredientId, ingredient);
-            if (ingredient.getCurrentStock().compareTo(recipeIngredient.getQuantityRequired()) < 0) {
-                throw new InsufficientStockException(ingredient.getName());
-            }
-        }
-
-        // All checks passed — deduct stock. No XP is awarded (deprecated/legacy behaviour).
-        // Reuse the locked references from the validation loop — no additional SELECT FOR UPDATE issued.
-        for (RecipeIngredient recipeIngredient : recipe.getIngredients()) {
-            Ingredient ingredient = lockedIngredients.get(recipeIngredient.getIngredient().getId());
-            ingredient.setCurrentStock(ingredient.getCurrentStock().subtract(recipeIngredient.getQuantityRequired()));
-            ingredientRepository.save(ingredient);
-        }
-
-        LocalDate today = LocalDate.now();
-        DailyBalance balance = dailyBalanceRepository.findById(today)
-                .orElse(new DailyBalance(today, BigDecimal.ZERO, 0));
-
-        BigDecimal recipePrice = recipe.getPrice() != null ? recipe.getPrice() : BigDecimal.ZERO;
-        balance.setTotalRevenue(balance.getTotalRevenue().add(recipePrice));
-        balance.setTotalOrders(balance.getTotalOrders() + 1);
-
-        dailyBalanceRepository.save(balance);
-    }
-
     @Transactional
     public OrderSummaryDTO processOrder(OrderRequest request) {
         Barista barista = baristaRepository.findById(request.baristaId())
