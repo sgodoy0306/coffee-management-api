@@ -135,6 +135,15 @@ No `RecipeIngredientRepository` exists. Correct teardown order: `recipeRepositor
 - `FinancialService` owns: `getDailyReport()`, `getHistory()`.
 - Both services added in R5. Controllers (`StockController`, `FinancialController`) no longer inject repositories directly.
 
+## Stream Terminal Operations (R27 — completed)
+
+- Use `.stream().toList()` (Java 16+) instead of `.stream().collect(Collectors.toList())` everywhere in this project.
+- `Stream.toList()` returns an **unmodifiable** list — matches the immutability intent of the project's data flow (services return DTOs, not mutable collections).
+- `Collectors.toList()` returns a mutable `ArrayList` with no immutability guarantees — a weaker contract.
+- Developers sometimes use the fully-qualified `java.util.stream.Collectors.toList()` inline (no import) to avoid adding an import — this is still a violation and produces the same verbose, weaker result. grep pattern to detect: `collect\(.*Collectors\.toList\(\)\)`.
+- `Collectors.joining()` is NOT affected by this rule — it produces a `String`, not a `List`, and has no direct `.toList()` equivalent.
+- Note the branch naming convention for this type of refactor: `chore/recipe-service-stream-toList`.
+
 ## Recurring Anti-Patterns Observed
 
 - Model classes use Lombok `@Data` (not records) — acceptable for JPA entities; records required only in `dto/` package.
