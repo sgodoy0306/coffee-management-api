@@ -46,7 +46,7 @@ public class RecipeService {
             Ingredient ingredient = ingredientRepository.findById(req.ingredientId())
                     .orElseThrow(() -> new IngredientNotFoundException(req.ingredientId()));
             return new RecipeIngredient(null, saved, ingredient, req.quantity());
-        }).collect(java.util.stream.Collectors.toList());
+        }).toList();
 
         saved.setIngredients(links);
         return toDTO(recipeRepository.save(saved));
