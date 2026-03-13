@@ -19,12 +19,14 @@ public class BaristaService {
 
     private final BaristaRepository baristaRepository;
 
+    @Transactional(readOnly = true)
     public List<BaristaDTO> findAll() {
         return baristaRepository.findAll().stream()
                 .map(this::toDTO)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public BaristaDTO findById(Long id) {
         Barista barista = baristaRepository.findById(id)
                 .orElseThrow(() -> new BaristaNotFoundException(id));

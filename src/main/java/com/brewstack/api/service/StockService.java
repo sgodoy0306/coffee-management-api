@@ -19,6 +19,7 @@ public class StockService {
 
     private final IngredientRepository ingredientRepository;
 
+    @Transactional(readOnly = true)
     public Page<IngredientDTO> getAllStock(Pageable pageable) {
         log.debug("Fetching ingredient stock levels - page={} size={}", pageable.getPageNumber(), pageable.getPageSize());
         return ingredientRepository.findAll(pageable).map(this::toDTO);

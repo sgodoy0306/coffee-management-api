@@ -26,10 +26,12 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
 
+    @Transactional(readOnly = true)
     public List<RecipeDTO> findAll() {
         return recipeRepository.findAllWithIngredients().stream().map(this::toDTO).toList();
     }
 
+    @Transactional(readOnly = true)
     public RecipeDTO findById(Long id) {
         return toDTO(recipeRepository.findByIdWithIngredients(id)
                 .orElseThrow(() -> new RecipeNotFoundException(id)));
