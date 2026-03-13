@@ -17,8 +17,11 @@
 - DTOs are Java `record`s (enforced by CLAUDE.md); model entities use Lombok @Data
 - `GlobalExceptionHandler` (@RestControllerAdvice) centralises all error mapping to `ErrorResponse` record
 - `DataInitializer` (CommandLineRunner) seeds 7 ingredients + 7 recipes idempotently on startup
-- `BrewService.processOrder()` validates ALL stock before ANY deduction (all-or-nothing semantic without DB-level lock)
-- XP leveling formula: `level = floor(sqrt(totalXp / 100)) + 1` — duplicated in BaristaService.addExperience() and BrewService.processOrder()
+- `BrewService.processOrder()` validates ALL stock before ANY deduction, using PESSIMISTIC_WRITE lock via `IngredientRepository.findByIdWithLock()`
+- XP leveling formula: `level = floor(sqrt(totalXp / 100)) + 1` — centralized in `Barista.levelForXp(long xp)` static method (model/Barista.java:25); both BaristaService and BrewService delegate to it
+- `InsufficientStockException` maps to HTTP 409 Conflict (not 400) — confirmed in GlobalExceptionHandler
+- `ErrorResponse` record includes `path` field (added per CLAUDE.md contract)
+- `ArchitecturePlan.md` at project root is the living architecture review document — 34 items tracked across 5 review rounds (R1–R34)
 
 ## API Surface
 | Controller | Base path | Notable endpoints |
@@ -29,18 +32,22 @@
 | StockController | /api/stock | GET all + PATCH /{id}/restock |
 | FinancialController | /api/finance | GET /daily-report, GET /history |
 
-## Known Issues / Areas for Improvement
-- `StockController` injects `IngredientRepository` directly — violates layering (no service)
-- `FinancialController` injects `DailyBalanceRepository` directly — same issue
-- XP formula duplicated in two services (BaristaService + BrewService) — DRY violation
-- Stock deduction saves each ingredient one-by-one in a loop inside a @Transactional — N individual saves instead of batch
-- `spring.jpa.hibernate.ddl-auto=update` is unsafe for production
-- `spring.jpa.show-sql=true` leaks SQL in production logs
-- No API versioning in URL prefix (path is /api/... not /api/v1/...)
-- No security layer (no Spring Security, no auth)
-- No observability tooling (no Actuator, no Micrometer, no distributed tracing)
-- Credentials hardcoded in application.properties (dev-only acceptable but no env-var mechanism)
-- `processBrew(Long recipeId)` (single-recipe brew) is a legacy endpoint that duplicates logic from processOrder — candidate for removal
+## Known Issues / Areas for Improvement (as of 2026-03-13, Fifth Review)
+READY FOR MERGE — no blocking issues remain.
+
+PENDING (non-blocking):
+- R7: Legacy endpoint `POST /api/brew/{recipeId}` — no sunset date documented
+- R32: Read methods in BaristaService, RecipeService, FinancialService, StockService lack `@Transactional(readOnly = true)`
+- R33: `BrewController.brew()` returns raw `Map<String, String>` instead of a typed DTO
+- R34: `BrewIntegrationTest.setUp()` does not clean `daily_balances` table — risk of test pollution
+
+RESOLVED (confirmed in code, Fifth Review additions):
+- R29: StockController now injects StockService — service layer boundary respected
+- R30: FinancialController now injects FinancialService — orElse logic moved to service
+- R31: RecipeService.createRecipe() uses .toList() — no Collectors.toList() in codebase
+- R6: XP formula centralised in Barista.levelForXp() static method
+
+Previously resolved (R1–R28): see ArchitecturePlan.md for full history
 
 ## Coding Conventions (from CLAUDE.md)
 - DTOs: always `record`, never Lombok @Data

@@ -6,6 +6,7 @@ import com.brewstack.api.repository.DailyBalanceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ public class FinancialService {
 
     private final DailyBalanceRepository dailyBalanceRepository;
 
+    @Transactional(readOnly = true)
     public DailyBalanceDTO getDailyReport() {
         LocalDate today = LocalDate.now();
         log.debug("Fetching daily balance report for date={}", today);
@@ -26,6 +28,7 @@ public class FinancialService {
         return toDTO(balance);
     }
 
+    @Transactional(readOnly = true)
     public List<DailyBalanceDTO> getHistory() {
         log.debug("Fetching full financial history ordered by date descending");
         return dailyBalanceRepository.findAllByOrderByDateDesc().stream()
