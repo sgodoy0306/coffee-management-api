@@ -7,6 +7,7 @@ import com.brewstack.api.model.Ingredient;
 import com.brewstack.api.model.Recipe;
 import com.brewstack.api.model.RecipeIngredient;
 import com.brewstack.api.repository.BaristaRepository;
+import com.brewstack.api.repository.DailyBalanceRepository;
 import com.brewstack.api.repository.IngredientRepository;
 import com.brewstack.api.repository.RecipeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,9 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
     private IngredientRepository ingredientRepository;
 
     @Autowired
+    private DailyBalanceRepository dailyBalanceRepository;
+
+    @Autowired
     private RecipeRepository recipeRepository;
 
     private Long baristaId;
@@ -44,6 +48,7 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        dailyBalanceRepository.deleteAll();
         recipeRepository.deleteAll();
         ingredientRepository.deleteAll();
         baristaRepository.deleteAll();
