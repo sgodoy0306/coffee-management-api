@@ -11,12 +11,14 @@ import com.brewstack.api.model.RecipeIngredient;
 import com.brewstack.api.repository.IngredientRepository;
 import com.brewstack.api.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecipeService {
@@ -35,6 +37,7 @@ public class RecipeService {
 
     @Transactional
     public RecipeDTO createRecipe(CreateRecipeRequest request) {
+        log.info("Creating new recipe with name='{}'", request.name());
         Recipe recipe = new Recipe();
         recipe.setName(request.name());
         recipe.setBaseXpReward(request.baseXpReward());
@@ -49,7 +52,9 @@ public class RecipeService {
         }).toList();
 
         saved.setIngredients(links);
-        return toDTO(recipeRepository.save(saved));
+        RecipeDTO created = toDTO(recipeRepository.save(saved));
+        log.info("Recipe created successfully with id={}", created.id());
+        return created;
     }
 
     private RecipeDTO toDTO(Recipe recipe) {
@@ -69,6 +74,7 @@ public class RecipeService {
 
     @Transactional
     public RecipeDTO updateRecipe(Long id, String name, Integer baseXpReward, BigDecimal price, String imageUrl) {
+        log.info("Updating recipe id={} with name='{}'", id, name);
         Recipe recipe = findEntityById(id);
         recipe.setName(name);
         recipe.setBaseXpReward(baseXpReward);
@@ -78,9 +84,11 @@ public class RecipeService {
     }
 
     public void deleteRecipe(Long id) {
+        log.info("Deleting recipe id={}", id);
         if (!recipeRepository.existsById(id)) {
             throw new RecipeNotFoundException(id);
         }
         recipeRepository.deleteById(id);
+        log.info("Recipe id={} deleted successfully", id);
     }
 }
