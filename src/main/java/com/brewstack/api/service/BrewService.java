@@ -48,7 +48,19 @@ public class BrewService {
                     .orElseThrow(() -> new RecipeNotFoundException(recipeId)));
         }
 
-        // Validate stock for every item before touching anything (atomicity).
+        // Accumulate the total demand per ingredient across all recipes in the order (R35 fix).
+        // Without this pre-pass, an order with two recipes sharing an ingredient (e.g. Latte +
+        // Cappuccino both requiring Espresso Beans) would pass per-recipe validation even when
+        // combined demand exceeds available stock, causing currentStock to go negative.
+        Map<Long, BigDecimal> totalDemanded = new HashMap<>();
+        for (Recipe recipe : recipes) {
+            for (RecipeIngredient ri : recipe.getIngredients()) {
+                Long ingredientId = ri.getIngredient().getId();
+                totalDemanded.merge(ingredientId, ri.getQuantityRequired(), BigDecimal::add);
+            }
+        }
+
+        // Validate stock for every ingredient against its total demand before touching anything (atomicity).
         // findByIdWithLock issues SELECT ... FOR UPDATE, preventing concurrent
         // transactions from reading the same stock value and both passing validation.
         // Locked references are stored in a Map keyed by ingredient ID so the deduction
@@ -62,7 +74,8 @@ public class BrewService {
                         id -> ingredientRepository
                                 .findByIdWithLock(id)
                                 .orElseThrow(() -> new InsufficientStockException(ri.getIngredient().getName())));
-                if (ingredient.getCurrentStock().compareTo(ri.getQuantityRequired()) < 0) {
+                BigDecimal demanded = totalDemanded.get(ingredientId);
+                if (ingredient.getCurrentStock().compareTo(demanded) < 0) {
                     throw new InsufficientStockException(ingredient.getName());
                 }
             }
