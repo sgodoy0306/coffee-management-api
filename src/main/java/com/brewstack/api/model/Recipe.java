@@ -9,7 +9,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Table(name = "recipes")
+@Table(name = "recipes", indexes = {
+    @Index(name = "idx_recipes_name", columnList = "name")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
