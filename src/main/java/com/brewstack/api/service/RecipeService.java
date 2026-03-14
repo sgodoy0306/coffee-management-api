@@ -85,12 +85,12 @@ public class RecipeService {
         return toDTO(recipeRepository.save(recipe));
     }
 
+    @Transactional
     public void deleteRecipe(Long id) {
         log.info("Deleting recipe id={}", id);
-        if (!recipeRepository.existsById(id)) {
-            throw new RecipeNotFoundException(id);
-        }
-        recipeRepository.deleteById(id);
+        Recipe recipe = recipeRepository.findByIdWithIngredients(id)
+                .orElseThrow(() -> new RecipeNotFoundException(id));
+        recipeRepository.delete(recipe);
         log.info("Recipe id={} deleted successfully", id);
     }
 }

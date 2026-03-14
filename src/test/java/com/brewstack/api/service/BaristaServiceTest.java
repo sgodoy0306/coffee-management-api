@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -111,5 +112,30 @@ class BaristaServiceTest {
         baristaService.addExperience(1L, 2);
 
         verify(baristaRepository).save(barista);
+    }
+
+    // ── deleteBarista ────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("deleteBarista — fetches entity then delegates to delete(entity)")
+    void deleteBarista_happyPath_callsDeleteWithEntity() {
+        given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
+
+        baristaService.deleteBarista(1L);
+
+        verify(baristaRepository).findById(1L);
+        verify(baristaRepository).delete(barista);
+    }
+
+    @Test
+    @DisplayName("deleteBarista — throws BaristaNotFoundException when barista is absent")
+    void deleteBarista_unknownBarista_throwsNotFoundException() {
+        given(baristaRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> baristaService.deleteBarista(99L))
+                .isInstanceOf(BaristaNotFoundException.class)
+                .hasMessageContaining("99");
+
+        verify(baristaRepository, never()).delete(any(Barista.class));
     }
 }
