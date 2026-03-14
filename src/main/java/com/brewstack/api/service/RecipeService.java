@@ -33,8 +33,7 @@ public class RecipeService {
 
     @Transactional(readOnly = true)
     public RecipeDTO findById(Long id) {
-        return toDTO(recipeRepository.findByIdWithIngredients(id)
-                .orElseThrow(() -> new RecipeNotFoundException(id)));
+        return toDTO(findEntityById(id));
     }
 
     @Transactional
@@ -88,8 +87,7 @@ public class RecipeService {
     @Transactional
     public void deleteRecipe(Long id) {
         log.info("Deleting recipe id={}", id);
-        Recipe recipe = recipeRepository.findByIdWithIngredients(id)
-                .orElseThrow(() -> new RecipeNotFoundException(id));
+        Recipe recipe = findEntityById(id);
         recipeRepository.delete(recipe);
         log.info("Recipe id={} deleted successfully", id);
     }
