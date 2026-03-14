@@ -218,4 +218,81 @@ class BrewServiceTest {
         // Neither ingredient must be persisted despite the first one passing
         verify(ingredientRepository, never()).save(any(Ingredient.class));
     }
+
+    // ── R35: shared ingredient across multiple recipes ───────────────────────
+
+    @Test
+    @DisplayName("processOrder — R35: throws InsufficientStockException when combined demand for shared ingredient exceeds stock")
+    void processOrder_sharedIngredientCombinedDemandExceedsStock_throwsInsufficientStockException() {
+        // Arrange: espresso has 25g — each recipe demands 18g — combined demand is 36g > 25g.
+        // Per-recipe validation would pass (25 >= 18 twice); total-demand validation must reject it.
+        Ingredient sharedEspresso = new Ingredient(1L, "Espresso Beans", new BigDecimal("25.0"), new BigDecimal("5.0"), "g");
+
+        Recipe cappuccino = new Recipe();
+        cappuccino.setId(20L);
+        cappuccino.setName("Cappuccino");
+        cappuccino.setPrice(new BigDecimal("4.00"));
+        cappuccino.setBaseXpReward(15);
+
+        RecipeIngredient latteEspresso = new RecipeIngredient(3L, latte, sharedEspresso, new BigDecimal("18.0"));
+        RecipeIngredient cappuccinoEspresso = new RecipeIngredient(4L, cappuccino, sharedEspresso, new BigDecimal("18.0"));
+
+        latte.setIngredients(List.of(latteEspresso));
+        cappuccino.setIngredients(List.of(cappuccinoEspresso));
+
+        OrderRequest request = new OrderRequest(List.of(10L, 20L), 1L);
+
+        given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
+        given(recipeRepository.findById(10L)).willReturn(Optional.of(latte));
+        given(recipeRepository.findById(20L)).willReturn(Optional.of(cappuccino));
+        given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(sharedEspresso));
+
+        // Act & Assert
+        assertThatThrownBy(() -> brewService.processOrder(request))
+                .isInstanceOf(InsufficientStockException.class)
+                .hasMessageContaining("Espresso Beans");
+
+        // Atomicity: no stock deduction, no revenue, no XP must be saved
+        verify(ingredientRepository, never()).save(any(Ingredient.class));
+        verify(dailyBalanceRepository, never()).save(any(DailyBalance.class));
+        verify(baristaRepository, never()).save(any(Barista.class));
+    }
+
+    @Test
+    @DisplayName("processOrder — R35: succeeds when combined demand for shared ingredient is within stock")
+    void processOrder_sharedIngredientCombinedDemandWithinStock_deductsTotalFromStock() {
+        // Arrange: espresso has 40g — each recipe demands 18g — combined demand is 36g <= 40g → should pass.
+        Ingredient sharedEspresso = new Ingredient(1L, "Espresso Beans", new BigDecimal("40.0"), new BigDecimal("5.0"), "g");
+
+        Recipe cappuccino = new Recipe();
+        cappuccino.setId(20L);
+        cappuccino.setName("Cappuccino");
+        cappuccino.setPrice(new BigDecimal("4.00"));
+        cappuccino.setBaseXpReward(15);
+
+        RecipeIngredient latteEspresso = new RecipeIngredient(3L, latte, sharedEspresso, new BigDecimal("18.0"));
+        RecipeIngredient cappuccinoEspresso = new RecipeIngredient(4L, cappuccino, sharedEspresso, new BigDecimal("18.0"));
+
+        latte.setIngredients(List.of(latteEspresso));
+        cappuccino.setIngredients(List.of(cappuccinoEspresso));
+
+        OrderRequest request = new OrderRequest(List.of(10L, 20L), 1L);
+
+        given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
+        given(recipeRepository.findById(10L)).willReturn(Optional.of(latte));
+        given(recipeRepository.findById(20L)).willReturn(Optional.of(cappuccino));
+        given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(sharedEspresso));
+        given(dailyBalanceRepository.findById(any(LocalDate.class))).willReturn(Optional.empty());
+        given(dailyBalanceRepository.save(any(DailyBalance.class))).willAnswer(inv -> inv.getArgument(0));
+        given(baristaRepository.save(any(Barista.class))).willAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        OrderSummaryDTO result = brewService.processOrder(request);
+
+        // Assert: both recipes brewed, stock deducted twice (18 + 18 = 36, result: 40 - 18 - 18 = 4)
+        assertThat(result.brewedRecipes()).containsExactly("Latte", "Cappuccino");
+        assertThat(sharedEspresso.getCurrentStock()).isEqualByComparingTo(new BigDecimal("4.0"));
+        assertThat(result.totalRevenue()).isEqualByComparingTo("8.50");
+        assertThat(result.totalOrders()).isEqualTo(2);
+    }
 }
