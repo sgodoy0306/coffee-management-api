@@ -5,12 +5,13 @@ import com.brewstack.api.model.DailyBalance;
 import com.brewstack.api.repository.DailyBalanceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -29,11 +30,11 @@ public class FinancialService {
     }
 
     @Transactional(readOnly = true)
-    public List<DailyBalanceDTO> getHistory() {
-        log.debug("Fetching full financial history ordered by date descending");
-        return dailyBalanceRepository.findAllByOrderByDateDesc().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<DailyBalanceDTO> getHistory(Pageable pageable) {
+        log.debug("Fetching financial history ordered by date descending - page={} size={}",
+                pageable.getPageNumber(), pageable.getPageSize());
+        return dailyBalanceRepository.findAllByOrderByDateDesc(pageable)
+                .map(this::toDTO);
     }
 
     private DailyBalanceDTO toDTO(DailyBalance balance) {
