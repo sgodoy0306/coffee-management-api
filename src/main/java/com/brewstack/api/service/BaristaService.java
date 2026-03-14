@@ -57,12 +57,12 @@ public class BaristaService {
         return new BaristaDTO(barista.getId(), barista.getName(), barista.getLevel(), barista.getTotalXp());
     }
 
+    @Transactional
     public void deleteBarista(Long id) {
         log.info("Deleting barista id={}", id);
-        if (!baristaRepository.existsById(id)) {
-            throw new BaristaNotFoundException(id);
-        }
-        baristaRepository.deleteById(id);
+        Barista barista = baristaRepository.findById(id)
+                .orElseThrow(() -> new BaristaNotFoundException(id));
+        baristaRepository.delete(barista);
         log.info("Barista id={} deleted successfully", id);
     }
 
