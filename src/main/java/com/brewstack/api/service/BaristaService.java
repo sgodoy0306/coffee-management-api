@@ -33,6 +33,7 @@ public class BaristaService {
         return toDTO(barista);
     }
 
+    @Transactional
     public BaristaDTO createBarista(String name) {
         log.info("Creating new barista with name='{}'", name);
         Barista barista = new Barista();

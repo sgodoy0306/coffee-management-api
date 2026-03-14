@@ -128,9 +128,10 @@ No `RecipeIngredientRepository` exists. Correct teardown order: `recipeRepositor
 
 ## Service Layer Pattern (confirmed for this project)
 
-- `BaristaService` uses explicit constructor (not `@RequiredArgsConstructor`) — new services follow the same explicit constructor pattern.
-- `@Transactional` is applied at the method level only on write operations (not the whole class).
-- Read-only methods do NOT need `@Transactional` in this project (no `@Transactional(readOnly = true)` used).
+- ALL services use `@RequiredArgsConstructor` (R24 corrected the last manual constructors).
+- `@Transactional` is applied at the method level on ALL write methods (`create`, `update`, `delete`) — not the whole class.
+- Read-only methods (`findAll`, `findById`) use `@Transactional(readOnly = true)` — confirmed present in `BaristaService` and consistent across services.
+- **R38 rule:** Every method that calls `repository.save()` or `repository.delete()` MUST have `@Transactional`. A single `save()` without it relies on Spring Data's implicit transaction — fragile if logic grows. This is a uniform project contract, not optional.
 - `StockService` owns: `getAllStock()`, `restock(Long id, RestockRequest request)`.
 - `FinancialService` owns: `getDailyReport()`, `getHistory()`.
 - Both services added in R5. Controllers (`StockController`, `FinancialController`) no longer inject repositories directly.
