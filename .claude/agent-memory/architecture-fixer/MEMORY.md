@@ -199,4 +199,4 @@ The `toDTO()` method is always `private` and lives in the service, not the entit
 
 ## Links to Detail Files
 
-- (none yet)
+- [nullable-constraints.md](nullable-constraints.md) — R45/R51 pattern: @Column(nullable=false) + Flyway V4 NOT NULL migration

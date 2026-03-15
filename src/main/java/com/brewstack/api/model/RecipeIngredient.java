@@ -30,6 +30,6 @@ public class RecipeIngredient {
     @JoinColumn(name = "ingredient_id")
     private Ingredient ingredient;
 
-    @Column(precision = 10, scale = 3)
+    @Column(nullable = false, precision = 10, scale = 3)
     private BigDecimal quantityRequired;
 }
