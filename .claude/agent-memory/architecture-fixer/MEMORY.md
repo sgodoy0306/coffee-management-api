@@ -202,3 +202,4 @@ The `toDTO()` method is always `private` and lives in the service, not the entit
 - [nullable-constraints.md](nullable-constraints.md) — R45/R51 pattern: @Column(nullable=false) + Flyway V4 NOT NULL migration
 - [transactional-dirty-checking.md](transactional-dirty-checking.md) — R49: redundant `repository.save()` inside `@Transactional` methods
 - [recipe-service-unit-test-patterns.md](recipe-service-unit-test-patterns.md) — R55: double save() stub pattern for createRecipe, mutable ArrayList for updateRecipe, findByIdWithIngredients stub requirement
+- [financial-service-unit-test-patterns.md](financial-service-unit-test-patterns.md) — R59: any(LocalDate.class) stub for LocalDate.now(), PageImpl 3-arg constructor for pagination metadata tests
