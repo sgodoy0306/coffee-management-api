@@ -41,10 +41,14 @@ public class BrewService {
         Barista barista = baristaRepository.findById(request.baristaId())
                 .orElseThrow(() -> new BaristaNotFoundException(request.baristaId()));
 
-        // Resolve all recipes first so we fail fast on missing IDs
+        // Resolve all recipes first so we fail fast on missing IDs.
+        // findByIdWithIngredients uses JOIN FETCH to load recipe.ingredients and
+        // ri.ingredient in a single query per recipe, eliminating the N+1 lazy
+        // SELECT that would otherwise fire when the validation and deduction loops
+        // access recipe.getIngredients() below (R44 fix).
         List<Recipe> recipes = new ArrayList<>();
         for (Long recipeId : request.recipeIds()) {
-            recipes.add(recipeRepository.findById(recipeId)
+            recipes.add(recipeRepository.findByIdWithIngredients(recipeId)
                     .orElseThrow(() -> new RecipeNotFoundException(recipeId)));
         }
 
