@@ -1,6 +1,7 @@
 package com.brewstack.api.service;
 
 import com.brewstack.api.AbstractIntegrationTest;
+import com.brewstack.api.dto.BaristaDTO;
 import com.brewstack.api.dto.LevelUpDTO;
 import com.brewstack.api.model.Barista;
 import com.brewstack.api.repository.BaristaRepository;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -198,5 +200,133 @@ class BaristaIntegrationTest extends AbstractIntegrationTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    // ── GET /api/baristas ─────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("GET /api/baristas — returns 200 with list containing created baristas")
+    void getAllBaristas_returns200WithListContent() {
+        baristaRepository.save(new Barista(null, "Ana", 1, 0L));
+        baristaRepository.save(new Barista(null, "Bruno", 1, 0L));
+
+        ResponseEntity<List> response = restTemplate.getForEntity("/api/baristas", List.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody()).hasSize(2);
+    }
+
+    // ── GET /api/baristas/{id} ────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("GET /api/baristas/{id} — existing id returns 200 with correct DTO")
+    void getBaristaById_existingId_returns200() {
+        Barista saved = baristaRepository.save(new Barista(null, "Lucia", 1, 0L));
+
+        ResponseEntity<BaristaDTO> response = restTemplate.getForEntity(
+                "/api/baristas/" + saved.getId(),
+                BaristaDTO.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().id()).isEqualTo(saved.getId());
+        assertThat(response.getBody().name()).isEqualTo("Lucia");
+    }
+
+    @Test
+    @DisplayName("GET /api/baristas/{id} — unknown id returns 404")
+    void getBaristaById_unknownId_returns404() {
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                "/api/baristas/999999",
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    // ── POST /api/baristas ────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("POST /api/baristas — valid request returns 201 with persisted DTO")
+    void createBarista_validRequest_returns201WithDTO() {
+        String body = """
+                {"name": "Marco"}
+                """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<BaristaDTO> response = restTemplate.postForEntity(
+                "/api/baristas",
+                entity,
+                BaristaDTO.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().id()).isNotNull();
+        assertThat(response.getBody().name()).isEqualTo("Marco");
+        assertThat(response.getBody().level()).isEqualTo(1);
+        assertThat(response.getBody().totalXp()).isEqualTo(0L);
+    }
+
+    // ── PUT /api/baristas/{id} ────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("PUT /api/baristas/{id} — existing id returns 200 with updated name")
+    void updateBarista_existingId_returns200WithUpdatedName() {
+        Barista saved = baristaRepository.save(new Barista(null, "OldName", 1, 0L));
+
+        String body = """
+                {"name": "NewName"}
+                """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<BaristaDTO> response = restTemplate.exchange(
+                "/api/baristas/" + saved.getId(),
+                HttpMethod.PUT,
+                entity,
+                BaristaDTO.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().name()).isEqualTo("NewName");
+        assertThat(response.getBody().id()).isEqualTo(saved.getId());
+    }
+
+    // ── DELETE /api/baristas/{id} ─────────────────────────────────────────────
+
+    @Test
+    @DisplayName("DELETE /api/baristas/{id} — existing id returns 204")
+    void deleteBarista_existingId_returns204() {
+        Barista saved = baristaRepository.save(new Barista(null, "ToDelete", 1, 0L));
+
+        ResponseEntity<Void> response = restTemplate.exchange(
+                "/api/baristas/" + saved.getId(),
+                HttpMethod.DELETE,
+                HttpEntity.EMPTY,
+                Void.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(baristaRepository.findById(saved.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("DELETE /api/baristas/{id} — unknown id returns 404")
+    void deleteBarista_unknownId_returns404() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/baristas/999999",
+                HttpMethod.DELETE,
+                HttpEntity.EMPTY,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }
