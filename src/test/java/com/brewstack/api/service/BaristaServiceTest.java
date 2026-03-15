@@ -1,5 +1,6 @@
 package com.brewstack.api.service;
 
+import com.brewstack.api.dto.BaristaDTO;
 import com.brewstack.api.dto.LevelUpDTO;
 import com.brewstack.api.exception.BaristaNotFoundException;
 import com.brewstack.api.model.Barista;
@@ -137,5 +138,89 @@ class BaristaServiceTest {
                 .hasMessageContaining("99");
 
         verify(baristaRepository, never()).delete(any(Barista.class));
+    }
+
+    // ── findById ─────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findById — returns correct DTO for existing barista")
+    void findById_existingBarista_returnsCorrectDTO() {
+        given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
+
+        BaristaDTO result = baristaService.findById(1L);
+
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.name()).isEqualTo("Alice");
+        assertThat(result.level()).isEqualTo(1);
+        assertThat(result.totalXp()).isEqualTo(0L);
+    }
+
+    @Test
+    @DisplayName("findById — throws BaristaNotFoundException for unknown barista")
+    void findById_unknownBarista_throwsBaristaNotFoundException() {
+        given(baristaRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> baristaService.findById(99L))
+                .isInstanceOf(BaristaNotFoundException.class)
+                .hasMessageContaining("99");
+    }
+
+    // ── createBarista ─────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("createBarista — new barista starts at level 1 with zero XP")
+    void createBarista_newBarista_startsAtLevelOneWithZeroXp() {
+        given(baristaRepository.save(any(Barista.class)))
+                .willAnswer(inv -> {
+                    Barista b = inv.getArgument(0);
+                    b.setId(2L);
+                    return b;
+                });
+
+        BaristaDTO result = baristaService.createBarista("Bob");
+
+        assertThat(result.level()).isEqualTo(1);
+        assertThat(result.totalXp()).isEqualTo(0L);
+    }
+
+    @Test
+    @DisplayName("createBarista — persisted barista DTO carries the requested name")
+    void createBarista_newBarista_persistsWithCorrectName() {
+        given(baristaRepository.save(any(Barista.class)))
+                .willAnswer(inv -> {
+                    Barista b = inv.getArgument(0);
+                    b.setId(3L);
+                    return b;
+                });
+
+        BaristaDTO result = baristaService.createBarista("Carol");
+
+        assertThat(result.name()).isEqualTo("Carol");
+    }
+
+    // ── updateBarista ─────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("updateBarista — updates name and returns correct DTO for existing barista")
+    void updateBarista_existingBarista_updatesNameAndReturnsDTO() {
+        given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
+        given(baristaRepository.save(any(Barista.class))).willAnswer(inv -> inv.getArgument(0));
+
+        BaristaDTO result = baristaService.updateBarista(1L, "Alice Updated");
+
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.name()).isEqualTo("Alice Updated");
+    }
+
+    @Test
+    @DisplayName("updateBarista — throws BaristaNotFoundException and never calls save for unknown barista")
+    void updateBarista_unknownBarista_throwsBaristaNotFoundException() {
+        given(baristaRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> baristaService.updateBarista(99L, "Ghost"))
+                .isInstanceOf(BaristaNotFoundException.class)
+                .hasMessageContaining("99");
+
+        verify(baristaRepository, never()).save(any(Barista.class));
     }
 }
