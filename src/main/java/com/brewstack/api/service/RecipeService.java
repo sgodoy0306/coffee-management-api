@@ -3,6 +3,8 @@ package com.brewstack.api.service;
 import com.brewstack.api.dto.CreateRecipeRequest;
 import com.brewstack.api.dto.RecipeDTO;
 import com.brewstack.api.dto.RecipeIngredientDTO;
+import com.brewstack.api.dto.RecipeIngredientRequest;
+import com.brewstack.api.dto.UpdateRecipeRequest;
 import com.brewstack.api.exception.IngredientNotFoundException;
 import com.brewstack.api.exception.RecipeNotFoundException;
 import com.brewstack.api.model.Ingredient;
@@ -15,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Slf4j
@@ -74,13 +75,25 @@ public class RecipeService {
     }
 
     @Transactional
-    public RecipeDTO updateRecipe(Long id, String name, Integer baseXpReward, BigDecimal price, String imageUrl) {
-        log.info("Updating recipe id={} with name='{}'", id, name);
+    public RecipeDTO updateRecipe(Long id, UpdateRecipeRequest request) {
+        log.info("Updating recipe id={} with name='{}'", id, request.name());
         Recipe recipe = findEntityById(id);
-        recipe.setName(name);
-        recipe.setBaseXpReward(baseXpReward);
-        recipe.setPrice(price);
-        recipe.setImageUrl(imageUrl);
+        recipe.setName(request.name());
+        recipe.setBaseXpReward(request.baseXpReward());
+        recipe.setPrice(request.price());
+        recipe.setImageUrl(request.imageUrl());
+
+        if (request.ingredients() != null && !request.ingredients().isEmpty()) {
+            log.info("Replacing ingredients for recipe id={}, count={}", id, request.ingredients().size());
+            recipe.getIngredients().clear();
+            List<RecipeIngredient> newLinks = request.ingredients().stream().map(req -> {
+                Ingredient ingredient = ingredientRepository.findById(req.ingredientId())
+                        .orElseThrow(() -> new IngredientNotFoundException(req.ingredientId()));
+                return new RecipeIngredient(null, recipe, ingredient, req.quantity());
+            }).toList();
+            recipe.getIngredients().addAll(newLinks);
+        }
+
         return toDTO(recipeRepository.save(recipe));
     }
 
