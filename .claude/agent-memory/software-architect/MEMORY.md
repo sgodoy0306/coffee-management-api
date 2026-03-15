@@ -36,25 +36,31 @@
 | StockController | /api/stock | GET all + PATCH /{id}/restock |
 | FinancialController | /api/finance | GET /daily-report, GET /history (paginated) |
 
-## Known Issues / Areas for Improvement (as of 2026-03-14, Seventh Review)
-NOT PRODUCTION-READY — R48 (missing pom.xml dependencies) is blocking. R42, R43, R44, R47, R53 also block production.
+## State as of 2026-03-15 (Eighth Review — dev branch)
+All R42–R54 from Seventh Review now RESOLVED in dev branch.
+R42: health.show-details=when-authorized. R43: ddl-auto=none. R44: findByIdWithIngredients used.
+R45+R51: V4__add_not_null_constraints.sql created. R46: @BatchSize(20) on Recipe.ingredients.
+R47: POST /api/brew/order returns 201. R48: pom.xml has Flyway, Actuator, Testcontainers declared.
+R49: save() loop removed. R50: DailyBalanceNotFoundException removed. R52: updateRecipe handles ingredients.
+R53: write-dates-as-timestamps=false in application.properties. R54: GET /api/stock/low implemented.
 
-OPEN (Seventh Review — R42–R54):
-- R42 CRITICAL: management.endpoint.health.show-details=always — exposes infra without auth → change to when-authorized
-- R43 CRITICAL: ddl-auto=validate with Flyway = dual source of truth → change to none
-- R44 HIGH: BrewService uses recipeRepository.findById() not findByIdWithIngredients() — LAZY load risk in order path
-- R45 HIGH: Barista.name (and others) missing @Column(nullable=false) and NOT NULL in V1 migration
-- R46 HIGH: Recipe.ingredients missing @BatchSize — no N+1 safety net for LAZY collection
-- R47 HIGH: POST /api/brew/order returns 200 OK instead of 201 Created
-- R48 HIGH BLOCKING: Flyway, Actuator, Testcontainers used in code/tests but NOT declared in pom.xml — integration tests cannot compile
-- R49 MEDIUM: ingredientRepository.save() called per ingredient in loop — redundant with JPA dirty checking
-- R50 MEDIUM: DailyBalanceNotFoundException declared + handler registered but never thrown — dead code
-- R51 MEDIUM: V1__init.sql missing NOT NULL on name/unit columns — BD does not enforce domain integrity
-- R52 MEDIUM: updateRecipe() cannot update ingredients — domain functionality gap (no RecipeIngredient update)
-- R53 MEDIUM: ErrorResponse.timestamp (LocalDateTime) serializes as JSON array without jackson config — add write-dates-as-timestamps=false
-- R54 LOW: findLowStockIngredients() declared in repo but unused — dead code + unused index
+OPEN (Eighth Review — R55–R62, tests only):
+- R55 HIGH: RecipeServiceTest missing createRecipe/updateRecipe unit tests
+- R56 HIGH: StockServiceTest missing (file exists but may be incomplete)
+- R57 HIGH: No integration test validates ErrorResponse body shape
+- R58 MEDIUM: BaristaServiceTest missing CRUD methods (findById, create, update)
+- R59 MEDIUM: FinancialServiceTest missing (file exists but may be incomplete)
+- R60 MEDIUM: StockIntegrationTest missing
+- R61 MEDIUM: 14 endpoints without HTTP integration tests
+- R62 LOW: rating=0 test case in BaristaServiceTest covers invalid scenario
 
-Previously resolved (R1–R41): see ArchitecturePlan.md for full history
+BLOCKING FOR MERGE (2026-03-15): BrewServiceTest has 7 failing tests.
+Root cause: stubs use recipeRepository.findById() but BrewService calls findByIdWithIngredients().
+Tests processOrder_happyPath_*, processOrder_insufficientStock_*, processOrder_sharedIngredient_* all fail.
+Also: processOrder_unknownRecipe test has UnnecessaryStubbingException (stub for findById(999L) is never called).
+Test score: 85 total, 3 failures, 4 errors, 0 skipped.
+
+Previously resolved (R1–R54): see ArchitecturePlan.md for full history
 
 ## Coding Conventions (from CLAUDE.md)
 - DTOs: always `record`, never Lombok @Data
