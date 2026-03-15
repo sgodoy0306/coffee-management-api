@@ -87,7 +87,7 @@ class BrewServiceTest {
         OrderRequest request = new OrderRequest(List.of(10L), 1L);
 
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
-        given(recipeRepository.findById(10L)).willReturn(Optional.of(latte));
+        given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
         // Validation loop
         given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(espresso));
         given(ingredientRepository.findByIdWithLock(2L)).willReturn(Optional.of(milk));
@@ -115,7 +115,7 @@ class BrewServiceTest {
         OrderRequest request = new OrderRequest(List.of(10L), 1L);
 
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
-        given(recipeRepository.findById(10L)).willReturn(Optional.of(latte));
+        given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
         given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(espresso));
         given(ingredientRepository.findByIdWithLock(2L)).willReturn(Optional.of(milk));
         given(dailyBalanceRepository.findById(any(LocalDate.class))).willReturn(Optional.empty());
@@ -125,11 +125,7 @@ class BrewServiceTest {
         // Act
         brewService.processOrder(request);
 
-        // Assert: ingredientRepository.save must be called twice (once per ingredient)
-        verify(ingredientRepository).save(espresso);
-        verify(ingredientRepository).save(milk);
-
-        // Stock values should have been decremented
+        // Stock values should have been decremented (Hibernate dirty checking handles persistence — no explicit save() call)
         assertThat(espresso.getCurrentStock()).isEqualByComparingTo(new BigDecimal("70.0"));
         assertThat(milk.getCurrentStock()).isEqualByComparingTo(new BigDecimal("350.0"));
     }
@@ -149,7 +145,7 @@ class BrewServiceTest {
                 .hasMessageContaining("99");
 
         // Recipes must never be queried when barista lookup fails
-        verify(recipeRepository, never()).findById(anyLong());
+        verify(recipeRepository, never()).findByIdWithIngredients(anyLong());
     }
 
     // ── Recipe not found ────────────────────────────────────────────────────
@@ -160,7 +156,7 @@ class BrewServiceTest {
         // Arrange
         OrderRequest request = new OrderRequest(List.of(999L), 1L);
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
-        given(recipeRepository.findById(999L)).willReturn(Optional.empty());
+        given(recipeRepository.findByIdWithIngredients(999L)).willReturn(Optional.empty());
 
         // Act & Assert
         assertThatThrownBy(() -> brewService.processOrder(request))
@@ -182,7 +178,7 @@ class BrewServiceTest {
 
         OrderRequest request = new OrderRequest(List.of(10L), 1L);
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
-        given(recipeRepository.findById(10L)).willReturn(Optional.of(latte));
+        given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
         given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(espresso));
 
         // Act & Assert
@@ -204,7 +200,7 @@ class BrewServiceTest {
 
         OrderRequest request = new OrderRequest(List.of(10L), 1L);
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
-        given(recipeRepository.findById(10L)).willReturn(Optional.of(latte));
+        given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
         // First ingredient passes validation
         given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(espresso));
         // Second ingredient fails
@@ -243,8 +239,8 @@ class BrewServiceTest {
         OrderRequest request = new OrderRequest(List.of(10L, 20L), 1L);
 
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
-        given(recipeRepository.findById(10L)).willReturn(Optional.of(latte));
-        given(recipeRepository.findById(20L)).willReturn(Optional.of(cappuccino));
+        given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
+        given(recipeRepository.findByIdWithIngredients(20L)).willReturn(Optional.of(cappuccino));
         given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(sharedEspresso));
 
         // Act & Assert
@@ -279,8 +275,8 @@ class BrewServiceTest {
         OrderRequest request = new OrderRequest(List.of(10L, 20L), 1L);
 
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
-        given(recipeRepository.findById(10L)).willReturn(Optional.of(latte));
-        given(recipeRepository.findById(20L)).willReturn(Optional.of(cappuccino));
+        given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
+        given(recipeRepository.findByIdWithIngredients(20L)).willReturn(Optional.of(cappuccino));
         given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(sharedEspresso));
         given(dailyBalanceRepository.findById(any(LocalDate.class))).willReturn(Optional.empty());
         given(dailyBalanceRepository.save(any(DailyBalance.class))).willAnswer(inv -> inv.getArgument(0));
