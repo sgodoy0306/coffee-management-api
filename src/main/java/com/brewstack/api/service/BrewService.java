@@ -95,7 +95,6 @@ public class BrewService {
             for (RecipeIngredient ri : recipe.getIngredients()) {
                 Ingredient ingredient = lockedIngredients.get(ri.getIngredient().getId());
                 ingredient.setCurrentStock(ingredient.getCurrentStock().subtract(ri.getQuantityRequired()));
-                ingredientRepository.save(ingredient);
             }
             BigDecimal price = recipe.getPrice() != null ? recipe.getPrice() : BigDecimal.ZERO;
             orderRevenue = orderRevenue.add(price);
