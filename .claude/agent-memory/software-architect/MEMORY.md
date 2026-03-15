@@ -36,31 +36,46 @@
 | StockController | /api/stock | GET all + PATCH /{id}/restock |
 | FinancialController | /api/finance | GET /daily-report, GET /history (paginated) |
 
-## State as of 2026-03-15 (Eighth Review — dev branch)
-All R42–R54 from Seventh Review now RESOLVED in dev branch.
-R42: health.show-details=when-authorized. R43: ddl-auto=none. R44: findByIdWithIngredients used.
-R45+R51: V4__add_not_null_constraints.sql created. R46: @BatchSize(20) on Recipe.ingredients.
-R47: POST /api/brew/order returns 201. R48: pom.xml has Flyway, Actuator, Testcontainers declared.
-R49: save() loop removed. R50: DailyBalanceNotFoundException removed. R52: updateRecipe handles ingredients.
-R53: write-dates-as-timestamps=false in application.properties. R54: GET /api/stock/low implemented.
+## State as of 2026-03-15 (Production Readiness Review — dev branch)
+All R1–R62 items RESOLVED. Test suite: 85 tests, 0 failures, 0 errors, BUILD SUCCESS.
+Test breakdown: BrewServiceTest(8), BaristaServiceTest(19), RecipeServiceTest(7), StockServiceTest(7),
+FinancialServiceTest(8), BrewIntegrationTest(5), BaristaIntegrationTest(14), RecipeIntegrationTest(7),
+StockIntegrationTest(7), FinancialIntegrationTest(3).
 
-OPEN (Eighth Review — R55–R62, tests only):
-- R55 HIGH: RecipeServiceTest missing createRecipe/updateRecipe unit tests
-- R56 HIGH: StockServiceTest missing (file exists but may be incomplete)
-- R57 HIGH: No integration test validates ErrorResponse body shape
-- R58 MEDIUM: BaristaServiceTest missing CRUD methods (findById, create, update)
-- R59 MEDIUM: FinancialServiceTest missing (file exists but may be incomplete)
-- R60 MEDIUM: StockIntegrationTest missing
-- R61 MEDIUM: 14 endpoints without HTTP integration tests
-- R62 LOW: rating=0 test case in BaristaServiceTest covers invalid scenario
+OPEN (Production Readiness Analysis — critical gaps identified 2026-03-15):
+CRITICAL:
+- No authentication/authorization (Spring Security absent — all endpoints are public)
+- Credentials hardcoded in application.properties (DB_USER default = brewstack, DB_PASSWORD default = brewstack123)
+- No application-prod.properties profile — same config for dev and prod
+- No Dockerfile or container image — no deployment artifact
+- No CI/CD pipeline (.github/ directory absent)
+- No rate limiting — BrewService vulnerable to inventory exhaustion attacks
 
-BLOCKING FOR MERGE (2026-03-15): BrewServiceTest has 7 failing tests.
-Root cause: stubs use recipeRepository.findById() but BrewService calls findByIdWithIngredients().
-Tests processOrder_happyPath_*, processOrder_insufficientStock_*, processOrder_sharedIngredient_* all fail.
-Also: processOrder_unknownRecipe test has UnnecessaryStubbingException (stub for findById(999L) is never called).
-Test score: 85 total, 3 failures, 4 errors, 0 skipped.
+HIGH:
+- No Springdoc/OpenAPI dependency — no API documentation
+- README documents removed endpoint POST /api/brew/{recipeId} as still existing (stale doc)
+- README error table says 400 for insufficient stock (actual is 409)
+- No connection pool tuning (HikariCP defaults — no explicit max-pool-size)
+- DataInitializer runs on every startup in prod (no profile guard)
+- No @Transactional on DataInitializer.run() for the full batch (each seed call is its own implicit transaction)
+- StockController.restock() has no @Transactional lock — concurrent restocks safe only at DB level
+- No Spring Boot version pinning beyond BOM (currently 3.2.0 — not latest 3.2.x patch)
 
-Previously resolved (R1–R54): see ArchitecturePlan.md for full history
+MEDIUM:
+- No Dockerfile; deployment relies on developer running `mvn spring-boot:run`
+- No structured logging format (plain text, not JSON) — hard to ingest into log aggregators
+- Actuator metrics endpoint exposed without auth (only health+info+metrics, no security)
+- No distributed tracing (no Micrometer Tracing / OpenTelemetry)
+- @Index on DailyBalance.date is redundant (date is already the PK)
+- RecipeController uses plain findAll (no pagination on recipe list)
+
+LOW:
+- Spring Boot 3.2.0 → latest patch is 3.2.x (minor CVE exposure)
+- No @UniqueConstraint on barista name or ingredient name (only existsByName guards at service level)
+- No max page size guard on Pageable — client can request page size = Integer.MAX_VALUE
+- README out of date (missing GET /api/stock/low endpoint)
+
+Previously resolved (R1–R62): see ArchitecturePlan.md for full history
 
 ## Coding Conventions (from CLAUDE.md)
 - DTOs: always `record`, never Lombok @Data
