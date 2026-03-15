@@ -200,3 +200,4 @@ The `toDTO()` method is always `private` and lives in the service, not the entit
 ## Links to Detail Files
 
 - [nullable-constraints.md](nullable-constraints.md) — R45/R51 pattern: @Column(nullable=false) + Flyway V4 NOT NULL migration
+- [transactional-dirty-checking.md](transactional-dirty-checking.md) — R49: redundant `repository.save()` inside `@Transactional` methods
