@@ -16,9 +16,14 @@ public class Barista {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
     private Integer level = 1;
 
     private Long totalXp = 0L;
+
+    public static int levelForXp(long xp) {
+        return (int) Math.floor(Math.sqrt(xp / 100.0)) + 1;
+    }
 }

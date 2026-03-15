@@ -3,13 +3,19 @@ services:
     image: postgres:16-alpine
     container_name: brewstack-db
     environment:
-      POSTGRES_DB: coffeedb
-      POSTGRES_USER: brewstack
-      POSTGRES_PASSWORD: brewstack123
+      POSTGRES_DB: ${POSTGRES_DB:-coffeedb}
+      POSTGRES_USER: ${POSTGRES_USER:-brewstack}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-brewstack123}
     ports:
       - "4040:5432"
     volumes:
       - brewstack_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-brewstack} -d ${POSTGRES_DB:-coffeedb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   brewstack_data:

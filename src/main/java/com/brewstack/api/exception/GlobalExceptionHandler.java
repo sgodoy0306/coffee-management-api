@@ -1,5 +1,7 @@
 package com.brewstack.api.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -8,57 +10,61 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     // ── 404 Not Found ────────────────────────────────────────────────────────
 
     @ExceptionHandler(BaristaNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleBaristaNotFound(BaristaNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleBaristaNotFound(BaristaNotFoundException ex,
+                                                               HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ErrorResponse.of(404, "Barista Not Found", ex.getMessage()));
+                .body(ErrorResponse.of(404, "Barista Not Found", ex.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(RecipeNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleRecipeNotFound(RecipeNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleRecipeNotFound(RecipeNotFoundException ex,
+                                                              HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ErrorResponse.of(404, "Recipe Not Found", ex.getMessage()));
+                .body(ErrorResponse.of(404, "Recipe Not Found", ex.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(IngredientNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleIngredientNotFound(IngredientNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleIngredientNotFound(IngredientNotFoundException ex,
+                                                                  HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ErrorResponse.of(404, "Ingredient Not Found", ex.getMessage()));
+                .body(ErrorResponse.of(404, "Ingredient Not Found", ex.getMessage(), request.getRequestURI()));
     }
 
-    @ExceptionHandler(DailyBalanceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleDailyBalanceNotFound(DailyBalanceNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ErrorResponse.of(404, "Daily Balance Not Found", ex.getMessage()));
+    // ── 409 Conflict ─────────────────────────────────────────────────────────
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientStock(InsufficientStockException ex,
+                                                                 HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(409, "Insufficient Stock", ex.getMessage(), request.getRequestURI()));
     }
 
     // ── 400 Bad Request ──────────────────────────────────────────────────────
 
-    @ExceptionHandler(InsufficientStockException.class)
-    public ResponseEntity<ErrorResponse> handleInsufficientStock(InsufficientStockException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.of(400, "Insufficient Stock", ex.getMessage()));
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex,
+                                                          HttpServletRequest request) {
         String details = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining(", "));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.of(400, "Validation Failed", details));
+                .body(ErrorResponse.of(400, "Validation Failed", details, request.getRequestURI()));
     }
 
     // ── 500 Internal Server Error ────────────────────────────────────────────
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
+        log.error("Unhandled exception at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ErrorResponse.of(500, "Internal Server Error", "An unexpected error occurred"));
+                .body(ErrorResponse.of(500, "Internal Server Error", "An unexpected error occurred",
+                        request.getRequestURI()));
     }
 }

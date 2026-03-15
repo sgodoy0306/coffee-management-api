@@ -15,14 +15,18 @@ import com.brewstack.api.repository.DailyBalanceRepository;
 import com.brewstack.api.repository.IngredientRepository;
 import com.brewstack.api.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BrewService {
@@ -33,66 +37,64 @@ public class BrewService {
     private final BaristaRepository baristaRepository;
 
     @Transactional
-    public void processBrew(Long recipeId) {
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new RecipeNotFoundException(recipeId));
-
-        for (RecipeIngredient recipeIngredient : recipe.getIngredients()) {
-            Ingredient ingredient = recipeIngredient.getIngredient();
-            if (ingredient.getCurrentStock() < recipeIngredient.getQuantityRequired()) {
-                throw new InsufficientStockException(ingredient.getName());
-            }
-        }
-
-        for (RecipeIngredient recipeIngredient : recipe.getIngredients()) {
-            Ingredient ingredient = recipeIngredient.getIngredient();
-            ingredient.setCurrentStock(ingredient.getCurrentStock() - recipeIngredient.getQuantityRequired());
-            ingredientRepository.save(ingredient);
-        }
-
-        LocalDate today = LocalDate.now();
-        DailyBalance balance = dailyBalanceRepository.findById(today)
-                .orElse(new DailyBalance(today, BigDecimal.ZERO, 0));
-
-        BigDecimal recipePrice = recipe.getPrice() != null ? recipe.getPrice() : BigDecimal.ZERO;
-        balance.setTotalRevenue(balance.getTotalRevenue().add(recipePrice));
-        balance.setTotalOrders(balance.getTotalOrders() + 1);
-
-        dailyBalanceRepository.save(balance);
-    }
-
-    @Transactional
     public OrderSummaryDTO processOrder(OrderRequest request) {
         Barista barista = baristaRepository.findById(request.baristaId())
                 .orElseThrow(() -> new BaristaNotFoundException(request.baristaId()));
 
-        // Resolve all recipes first so we fail fast on missing IDs
+        // Resolve all recipes first so we fail fast on missing IDs.
+        // findByIdWithIngredients uses JOIN FETCH to load recipe.ingredients and
+        // ri.ingredient in a single query per recipe, eliminating the N+1 lazy
+        // SELECT that would otherwise fire when the validation and deduction loops
+        // access recipe.getIngredients() below (R44 fix).
         List<Recipe> recipes = new ArrayList<>();
         for (Long recipeId : request.recipeIds()) {
-            recipes.add(recipeRepository.findById(recipeId)
+            recipes.add(recipeRepository.findByIdWithIngredients(recipeId)
                     .orElseThrow(() -> new RecipeNotFoundException(recipeId)));
         }
 
-        // Validate stock for every item before touching anything (atomicity)
+        // Accumulate the total demand per ingredient across all recipes in the order (R35 fix).
+        // Without this pre-pass, an order with two recipes sharing an ingredient (e.g. Latte +
+        // Cappuccino both requiring Espresso Beans) would pass per-recipe validation even when
+        // combined demand exceeds available stock, causing currentStock to go negative.
+        Map<Long, BigDecimal> totalDemanded = new HashMap<>();
         for (Recipe recipe : recipes) {
             for (RecipeIngredient ri : recipe.getIngredients()) {
-                Ingredient ingredient = ri.getIngredient();
-                if (ingredient.getCurrentStock() < ri.getQuantityRequired()) {
+                Long ingredientId = ri.getIngredient().getId();
+                totalDemanded.merge(ingredientId, ri.getQuantityRequired(), BigDecimal::add);
+            }
+        }
+
+        // Validate stock for every ingredient against its total demand before touching anything (atomicity).
+        // findByIdWithLock issues SELECT ... FOR UPDATE, preventing concurrent
+        // transactions from reading the same stock value and both passing validation.
+        // Locked references are stored in a Map keyed by ingredient ID so the deduction
+        // loop can reuse the same in-memory objects without issuing a second
+        // SELECT ... FOR UPDATE per ingredient (R23 fix: reduces 2×N locks to N locks).
+        Map<Long, Ingredient> lockedIngredients = new HashMap<>();
+        for (Recipe recipe : recipes) {
+            for (RecipeIngredient ri : recipe.getIngredients()) {
+                Long ingredientId = ri.getIngredient().getId();
+                Ingredient ingredient = lockedIngredients.computeIfAbsent(ingredientId,
+                        id -> ingredientRepository
+                                .findByIdWithLock(id)
+                                .orElseThrow(() -> new InsufficientStockException(ri.getIngredient().getName())));
+                BigDecimal demanded = totalDemanded.get(ingredientId);
+                if (ingredient.getCurrentStock().compareTo(demanded) < 0) {
                     throw new InsufficientStockException(ingredient.getName());
                 }
             }
         }
 
-        // All checks passed — deduct stock and accumulate revenue + XP
+        // All checks passed — deduct stock and accumulate revenue + XP.
+        // Reuse the locked references from the validation map — no additional SELECT FOR UPDATE issued.
         BigDecimal orderRevenue = BigDecimal.ZERO;
         long xpGained = 0L;
         List<String> brewedNames = new ArrayList<>();
 
         for (Recipe recipe : recipes) {
             for (RecipeIngredient ri : recipe.getIngredients()) {
-                Ingredient ingredient = ri.getIngredient();
-                ingredient.setCurrentStock(ingredient.getCurrentStock() - ri.getQuantityRequired());
-                ingredientRepository.save(ingredient);
+                Ingredient ingredient = lockedIngredients.get(ri.getIngredient().getId());
+                ingredient.setCurrentStock(ingredient.getCurrentStock().subtract(ri.getQuantityRequired()));
             }
             BigDecimal price = recipe.getPrice() != null ? recipe.getPrice() : BigDecimal.ZERO;
             orderRevenue = orderRevenue.add(price);
@@ -110,9 +112,12 @@ public class BrewService {
 
         // Grant XP to barista
         barista.setTotalXp(barista.getTotalXp() + xpGained);
-        int newLevel = (int) Math.floor(Math.sqrt(barista.getTotalXp() / 100.0)) + 1;
+        int newLevel = Barista.levelForXp(barista.getTotalXp());
         barista.setLevel(newLevel);
         baristaRepository.save(barista);
+
+        log.info("Order processed: baristaId={} recipes={} revenue={} newLevel={}",
+                request.baristaId(), brewedNames, orderRevenue, newLevel);
 
         return new OrderSummaryDTO(brewedNames, orderRevenue, recipes.size(), barista.getTotalXp(), newLevel);
     }

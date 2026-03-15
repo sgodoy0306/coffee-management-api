@@ -3,6 +3,8 @@ package com.brewstack.api.service;
 import com.brewstack.api.dto.CreateRecipeRequest;
 import com.brewstack.api.dto.RecipeDTO;
 import com.brewstack.api.dto.RecipeIngredientDTO;
+import com.brewstack.api.dto.RecipeIngredientRequest;
+import com.brewstack.api.dto.UpdateRecipeRequest;
 import com.brewstack.api.exception.IngredientNotFoundException;
 import com.brewstack.api.exception.RecipeNotFoundException;
 import com.brewstack.api.model.Ingredient;
@@ -11,12 +13,14 @@ import com.brewstack.api.model.RecipeIngredient;
 import com.brewstack.api.repository.IngredientRepository;
 import com.brewstack.api.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecipeService {
@@ -24,17 +28,19 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
 
+    @Transactional(readOnly = true)
     public List<RecipeDTO> findAll() {
-        return recipeRepository.findAll().stream().map(this::toDTO).toList();
+        return recipeRepository.findAllWithIngredients().stream().map(this::toDTO).toList();
     }
 
+    @Transactional(readOnly = true)
     public RecipeDTO findById(Long id) {
-        return toDTO(recipeRepository.findById(id)
-                .orElseThrow(() -> new RecipeNotFoundException(id)));
+        return toDTO(findEntityById(id));
     }
 
     @Transactional
     public RecipeDTO createRecipe(CreateRecipeRequest request) {
+        log.info("Creating new recipe with name='{}'", request.name());
         Recipe recipe = new Recipe();
         recipe.setName(request.name());
         recipe.setBaseXpReward(request.baseXpReward());
@@ -46,10 +52,12 @@ public class RecipeService {
             Ingredient ingredient = ingredientRepository.findById(req.ingredientId())
                     .orElseThrow(() -> new IngredientNotFoundException(req.ingredientId()));
             return new RecipeIngredient(null, saved, ingredient, req.quantity());
-        }).collect(java.util.stream.Collectors.toList());
+        }).collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
         saved.setIngredients(links);
-        return toDTO(recipeRepository.save(saved));
+        RecipeDTO created = toDTO(recipeRepository.save(saved));
+        log.info("Recipe created successfully with id={}", created.id());
+        return created;
     }
 
     private RecipeDTO toDTO(Recipe recipe) {
@@ -63,23 +71,38 @@ public class RecipeService {
     }
 
     private Recipe findEntityById(Long id) {
-        return recipeRepository.findById(id)
+        return recipeRepository.findByIdWithIngredients(id)
                 .orElseThrow(() -> new RecipeNotFoundException(id));
     }
 
     @Transactional
-    public RecipeDTO updateRecipe(Long id, String name, Integer baseXpReward, BigDecimal price) {
+    public RecipeDTO updateRecipe(Long id, UpdateRecipeRequest request) {
+        log.info("Updating recipe id={} with name='{}'", id, request.name());
         Recipe recipe = findEntityById(id);
-        recipe.setName(name);
-        recipe.setBaseXpReward(baseXpReward);
-        recipe.setPrice(price);
+        recipe.setName(request.name());
+        recipe.setBaseXpReward(request.baseXpReward());
+        recipe.setPrice(request.price());
+        recipe.setImageUrl(request.imageUrl());
+
+        if (request.ingredients() != null && !request.ingredients().isEmpty()) {
+            log.info("Replacing ingredients for recipe id={}, count={}", id, request.ingredients().size());
+            recipe.getIngredients().clear();
+            List<RecipeIngredient> newLinks = request.ingredients().stream().map(req -> {
+                Ingredient ingredient = ingredientRepository.findById(req.ingredientId())
+                        .orElseThrow(() -> new IngredientNotFoundException(req.ingredientId()));
+                return new RecipeIngredient(null, recipe, ingredient, req.quantity());
+            }).toList();
+            recipe.getIngredients().addAll(newLinks);
+        }
+
         return toDTO(recipeRepository.save(recipe));
     }
 
+    @Transactional
     public void deleteRecipe(Long id) {
-        if (!recipeRepository.existsById(id)) {
-            throw new RecipeNotFoundException(id);
-        }
-        recipeRepository.deleteById(id);
+        log.info("Deleting recipe id={}", id);
+        Recipe recipe = findEntityById(id);
+        recipeRepository.delete(recipe);
+        log.info("Recipe id={} deleted successfully", id);
     }
 }

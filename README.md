@@ -239,13 +239,12 @@ Returns `404` if any ingredient ID does not exist in the database.
 ### Brew — `/api/brew`
 
 
-| Method | Path                   | Description                                                       | Body                              |
-| ------ | ---------------------- | ----------------------------------------------------------------- | --------------------------------- |
-| `POST` | `/api/brew/{recipeId}` | Process a single brew: deducts stock and records revenue          | —                                 |
-| `POST` | `/api/brew/order`      | Process a multi-recipe order and award XP to the assigned barista | `{ "recipeIds", "baristaId" }`    |
+| Method | Path              | Description                                                       | Body                           |
+| ------ | ----------------- | ----------------------------------------------------------------- | ------------------------------ |
+| `POST` | `/api/brew/order` | Process a multi-recipe order and award XP to the assigned barista | `{ "recipeIds", "baristaId" }` |
 
 
-Returns `400` if any ingredient has insufficient stock.
+Returns `409` if any ingredient has insufficient stock.
 
 **POST /api/brew/order request example:**
 
@@ -274,10 +273,11 @@ Stock is validated for all recipes atomically before any deduction. The barista 
 ### Stock — `/api/stock`
 
 
-| Method   | Path                      | Description                            | Body               |
-| -------- | ------------------------- | -------------------------------------- | ------------------ |
-| `GET`    | `/api/stock`              | List all ingredients and stock levels  | —                  |
-| `PATCH`  | `/api/stock/{id}/restock` | Add stock to an ingredient by ID       | `{ "amount" }`     |
+| Method   | Path                      | Description                            | Body           |
+| -------- | ------------------------- | -------------------------------------- | -------------- |
+| `GET`    | `/api/stock`              | List all ingredients (paginated)       | —              |
+| `GET`    | `/api/stock/low`          | List ingredients below minimum stock  | —              |
+| `PATCH`  | `/api/stock/{id}/restock` | Add stock to an ingredient by ID       | `{ "amount" }` |
 
 
 **PATCH /api/stock/{id}/restock request example:**
@@ -320,19 +320,21 @@ All errors return a consistent JSON shape:
 
 ```json
 {
+  "timestamp": "2026-03-08T14:30:00",
   "status": 404,
   "error": "Recipe Not Found",
   "message": "Recipe not found with id: 99",
-  "timestamp": "2026-03-08T14:30:00"
+  "path": "/api/recipes/99"
 }
 ```
 
 
-| Status | Cause                                      |
-| ------ | ------------------------------------------ |
-| `400`  | Insufficient stock or invalid request body |
-| `404`  | Barista, recipe, or ingredient not found   |
-| `500`  | Unexpected server error                    |
+| Status | Cause                                    |
+| ------ | ---------------------------------------- |
+| `400`  | Validation failed (invalid request body) |
+| `404`  | Barista, recipe, or ingredient not found |
+| `409`  | Insufficient stock                       |
+| `500`  | Unexpected server error                  |
 
 
 ---
