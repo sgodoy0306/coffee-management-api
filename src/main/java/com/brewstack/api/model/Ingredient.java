@@ -21,6 +21,7 @@ public class Ingredient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
     @Column(precision = 10, scale = 3)
@@ -29,5 +30,6 @@ public class Ingredient {
     @Column(precision = 10, scale = 3)
     private BigDecimal minimumThreshold;
 
+    @Column(nullable = false)
     private String unit;
 }
