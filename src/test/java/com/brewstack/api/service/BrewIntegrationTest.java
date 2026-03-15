@@ -17,12 +17,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -151,5 +153,65 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    // ── ErrorResponse shape validation ───────────────────────────────────────
+
+    @Test
+    @DisplayName("POST /api/brew/order — unknown barista 404 body has correct ErrorResponse shape")
+    void order_unknownBarista_errorResponseHasCorrectShape() {
+        String body = String.format("""
+                {
+                    "recipeIds": [%d],
+                    "baristaId": 999999
+                }
+                """, recipeId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/brew/order",
+                HttpMethod.POST,
+                entity,
+                Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+        Map<String, Object> errorBody = response.getBody();
+        assertThat(errorBody).isNotNull();
+        assertThat(errorBody).containsKeys("timestamp", "status", "error", "message", "path");
+        assertThat(errorBody.get("status")).isEqualTo(404);
+        assertThat(errorBody.get("path").toString()).contains("/api/brew/order");
+        // Detects R53 regression: LocalDateTime must serialize as ISO-8601 String,
+        // not as a JSON array [2026,3,15,...] when WRITE_DATES_AS_TIMESTAMPS=false
+        assertThat(errorBody.get("timestamp")).isInstanceOf(String.class);
+    }
+
+    // ── Bean Validation — POST /api/brew/order ───────────────────────────────
+
+    @Test
+    @DisplayName("POST /api/brew/order — empty recipeIds list returns 400")
+    void order_emptyRecipeList_returns400() {
+        String body = String.format("""
+                {
+                    "recipeIds": [],
+                    "baristaId": %d
+                }
+                """, baristaId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/api/brew/order",
+                entity,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 }

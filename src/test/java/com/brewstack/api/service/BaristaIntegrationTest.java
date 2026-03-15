@@ -11,9 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,5 +75,128 @@ class BaristaIntegrationTest extends AbstractIntegrationTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    // ── ErrorResponse shape validation ───────────────────────────────────────
+
+    @Test
+    @DisplayName("POST /api/baristas/{id}/practice — 404 body has correct ErrorResponse shape")
+    void practice_unknownBarista_errorResponseHasCorrectShape() {
+        String body = """
+                {"rating": 5}
+                """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/baristas/999999/practice",
+                HttpMethod.POST,
+                entity,
+                Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+        Map<String, Object> errorBody = response.getBody();
+        assertThat(errorBody).isNotNull();
+        assertThat(errorBody).containsKeys("timestamp", "status", "error", "message", "path");
+        assertThat(errorBody.get("status")).isEqualTo(404);
+        assertThat(errorBody.get("path").toString()).contains("/api/baristas");
+        // Detects R53 regression: LocalDateTime must serialize as ISO-8601 String,
+        // not as a JSON array [2026,3,15,...] when WRITE_DATES_AS_TIMESTAMPS=false
+        assertThat(errorBody.get("timestamp")).isInstanceOf(String.class);
+    }
+
+    // ── Bean Validation — POST /api/baristas ─────────────────────────────────
+
+    @Test
+    @DisplayName("POST /api/baristas — blank name returns 400")
+    void createBarista_blankName_returns400() {
+        String body = """
+                {"name": ""}
+                """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/api/baristas",
+                entity,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @DisplayName("POST /api/baristas — blank name error body has correct ErrorResponse shape")
+    void createBarista_blankName_errorResponseHasCorrectShape() {
+        String body = """
+                {"name": ""}
+                """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/baristas",
+                HttpMethod.POST,
+                entity,
+                Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        Map<String, Object> errorBody = response.getBody();
+        assertThat(errorBody).isNotNull();
+        assertThat(errorBody).containsKeys("timestamp", "status", "error", "message", "path");
+        assertThat(errorBody.get("status")).isEqualTo(400);
+        assertThat(errorBody.get("path").toString()).contains("/api/baristas");
+        assertThat(errorBody.get("timestamp")).isInstanceOf(String.class);
+    }
+
+    // ── Bean Validation — POST /api/baristas/{id}/practice ───────────────────
+
+    @Test
+    @DisplayName("POST /api/baristas/{id}/practice — rating below minimum (0) returns 400")
+    void practice_ratingBelowMin_returns400() {
+        Barista saved = baristaRepository.save(new Barista(null, "Alice", 1, 0L));
+
+        String body = """
+                {"rating": 0}
+                """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/api/baristas/" + saved.getId() + "/practice",
+                entity,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @DisplayName("POST /api/baristas/{id}/practice — rating above maximum (11) returns 400")
+    void practice_ratingAboveMax_returns400() {
+        Barista saved = baristaRepository.save(new Barista(null, "Alice", 1, 0L));
+
+        String body = """
+                {"rating": 11}
+                """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/api/baristas/" + saved.getId() + "/practice",
+                entity,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 }
