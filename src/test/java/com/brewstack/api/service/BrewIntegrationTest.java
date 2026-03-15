@@ -75,8 +75,8 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/brew/order — happy path returns 200 with correct summary")
-    void order_endpoint_happyPath_returns200WithSummary() {
+    @DisplayName("POST /api/brew/order — happy path returns 201 with correct summary")
+    void order_endpoint_happyPath_returns201WithSummary() {
         String body = String.format("""
                 {
                     "recipeIds": [%d],
@@ -94,7 +94,7 @@ class BrewIntegrationTest extends AbstractIntegrationTest {
                 OrderSummaryDTO.class
         );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().brewedRecipes()).containsExactly("Cappuccino");
         assertThat(response.getBody().totalRevenue()).isEqualByComparingTo("3.75");

@@ -5,6 +5,7 @@ import com.brewstack.api.dto.OrderSummaryDTO;
 import com.brewstack.api.service.BrewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,6 @@ public class BrewController {
     @PostMapping("/order")
     public ResponseEntity<OrderSummaryDTO> order(@Valid @RequestBody OrderRequest request) {
         OrderSummaryDTO summary = brewService.processOrder(request);
-        return ResponseEntity.ok(summary);
+        return ResponseEntity.status(HttpStatus.CREATED).body(summary);
     }
 }
