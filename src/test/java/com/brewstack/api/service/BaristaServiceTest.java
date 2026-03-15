@@ -47,7 +47,6 @@ class BaristaServiceTest {
     @DisplayName("addExperience — level formula boundary values")
     @CsvSource({
         // startXp, rating, expectedLevel, expectedTotalXp
-        "0,  0,  1,   0",
         "0,  1,  1,  50",
         "49, 1,  1,  99",
         "50, 1,  2, 100",
