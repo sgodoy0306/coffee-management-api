@@ -37,13 +37,6 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(404, "Ingredient Not Found", ex.getMessage(), request.getRequestURI()));
     }
 
-    @ExceptionHandler(DailyBalanceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleDailyBalanceNotFound(DailyBalanceNotFoundException ex,
-                                                                    HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ErrorResponse.of(404, "Daily Balance Not Found", ex.getMessage(), request.getRequestURI()));
-    }
-
     // ── 409 Conflict ─────────────────────────────────────────────────────────
 
     @ExceptionHandler(InsufficientStockException.class)
