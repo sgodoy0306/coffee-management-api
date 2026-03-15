@@ -11,6 +11,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/stock")
 @RequiredArgsConstructor
@@ -22,6 +24,11 @@ public class StockController {
     public ResponseEntity<Page<IngredientDTO>> getAllStock(
             @PageableDefault(size = 20, sort = "name") Pageable pageable) {
         return ResponseEntity.ok(stockService.getAllStock(pageable));
+    }
+
+    @GetMapping("/low")
+    public ResponseEntity<List<IngredientDTO>> getLowStockIngredients() {
+        return ResponseEntity.ok(stockService.getLowStockIngredients());
     }
 
     @PatchMapping("/{id}/restock")
