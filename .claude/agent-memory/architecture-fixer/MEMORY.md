@@ -197,6 +197,23 @@ The `toDTO()` method is always `private` and lives in the service, not the entit
 - When `@Slf4j` is also present, the canonical order is: `@Slf4j` first, then `@RequiredArgsConstructor`, then the Spring stereotype annotation (`@Service`, `@RestController`, etc.).
 - Manual constructors in Spring beans are a maintenance hazard: a developer adding a new `final` field following the project's pattern will cause a duplicate-constructor compile error that does not clearly point to the root cause.
 
+## Table Names (updated — V5 added)
+
+- `Pastry` → `pastries` (added in V5__add_pastries_table.sql)
+- Last Flyway version in use: **V5**
+
+## Known Exception → HTTP Mapping Table
+
+| Exception class             | HTTP status | error string        |
+|-----------------------------|-------------|---------------------|
+| BaristaNotFoundException    | 404         | Barista Not Found   |
+| RecipeNotFoundException     | 404         | Recipe Not Found    |
+| IngredientNotFoundException | 404         | Ingredient Not Found|
+| PastryNotFoundException     | 404         | Pastry Not Found    |
+| InsufficientStockException  | 409         | Insufficient Stock  |
+| MethodArgumentNotValidException | 400    | Validation Failed   |
+| Exception (generic)         | 500         | Internal Server Error|
+
 ## Links to Detail Files
 
 - [nullable-constraints.md](nullable-constraints.md) — R45/R51 pattern: @Column(nullable=false) + Flyway V4 NOT NULL migration

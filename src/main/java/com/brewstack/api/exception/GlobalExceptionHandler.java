@@ -37,6 +37,13 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(404, "Ingredient Not Found", ex.getMessage(), request.getRequestURI()));
     }
 
+    @ExceptionHandler(PastryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePastryNotFound(PastryNotFoundException ex,
+                                                              HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(404, "Pastry Not Found", ex.getMessage(), request.getRequestURI()));
+    }
+
     // ── 409 Conflict ─────────────────────────────────────────────────────────
 
     @ExceptionHandler(InsufficientStockException.class)
