@@ -8,6 +8,7 @@ import com.brewstack.api.exception.RecipeNotFoundException;
 import com.brewstack.api.model.Barista;
 import com.brewstack.api.model.DailyBalance;
 import com.brewstack.api.model.Ingredient;
+import com.brewstack.api.model.OrderType;
 import com.brewstack.api.model.Recipe;
 import com.brewstack.api.model.RecipeIngredient;
 import com.brewstack.api.repository.BaristaRepository;
@@ -40,6 +41,8 @@ public class BrewService {
     public OrderSummaryDTO processOrder(OrderRequest request) {
         Barista barista = baristaRepository.findById(request.baristaId())
                 .orElseThrow(() -> new BaristaNotFoundException(request.baristaId()));
+
+        OrderType orderType = request.orderType() != null ? request.orderType() : OrderType.DINE_IN;
 
         // Resolve all recipes first so we fail fast on missing IDs.
         // findByIdWithIngredients uses JOIN FETCH to load recipe.ingredients and
@@ -116,9 +119,9 @@ public class BrewService {
         barista.setLevel(newLevel);
         baristaRepository.save(barista);
 
-        log.info("Order processed: baristaId={} recipes={} revenue={} newLevel={}",
-                request.baristaId(), brewedNames, orderRevenue, newLevel);
+        log.info("Order processed: baristaId={} recipes={} revenue={} newLevel={} orderType={}",
+                request.baristaId(), brewedNames, orderRevenue, newLevel, orderType);
 
-        return new OrderSummaryDTO(brewedNames, orderRevenue, recipes.size(), barista.getTotalXp(), newLevel);
+        return new OrderSummaryDTO(brewedNames, orderRevenue, recipes.size(), barista.getTotalXp(), newLevel, orderType);
     }
 }
