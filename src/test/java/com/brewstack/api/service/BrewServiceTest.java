@@ -84,7 +84,7 @@ class BrewServiceTest {
     @DisplayName("processOrder — happy path returns correct summary and awards XP")
     void processOrder_happyPath_returnsCorrectSummary() {
         // Arrange
-        OrderRequest request = new OrderRequest(List.of(10L), 1L);
+        OrderRequest request = new OrderRequest(List.of(10L), 1L, null);
 
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
         given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
@@ -112,7 +112,7 @@ class BrewServiceTest {
     @DisplayName("processOrder — happy path deducts stock for all ingredients")
     void processOrder_happyPath_deductsStock() {
         // Arrange
-        OrderRequest request = new OrderRequest(List.of(10L), 1L);
+        OrderRequest request = new OrderRequest(List.of(10L), 1L, null);
 
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
         given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
@@ -136,7 +136,7 @@ class BrewServiceTest {
     @DisplayName("processOrder — throws BaristaNotFoundException when barista is absent")
     void processOrder_unknownBarista_throwsBaristaNotFoundException() {
         // Arrange
-        OrderRequest request = new OrderRequest(List.of(10L), 99L);
+        OrderRequest request = new OrderRequest(List.of(10L), 99L, null);
         given(baristaRepository.findById(99L)).willReturn(Optional.empty());
 
         // Act & Assert
@@ -154,7 +154,7 @@ class BrewServiceTest {
     @DisplayName("processOrder — throws RecipeNotFoundException when recipe is absent")
     void processOrder_unknownRecipe_throwsRecipeNotFoundException() {
         // Arrange
-        OrderRequest request = new OrderRequest(List.of(999L), 1L);
+        OrderRequest request = new OrderRequest(List.of(999L), 1L, null);
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
         given(recipeRepository.findByIdWithIngredients(999L)).willReturn(Optional.empty());
 
@@ -176,7 +176,7 @@ class BrewServiceTest {
         // Arrange: espresso stock is lower than required (10 < 30)
         espresso.setCurrentStock(new BigDecimal("10.0"));
 
-        OrderRequest request = new OrderRequest(List.of(10L), 1L);
+        OrderRequest request = new OrderRequest(List.of(10L), 1L, null);
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
         given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
         given(ingredientRepository.findByIdWithLock(1L)).willReturn(Optional.of(espresso));
@@ -198,7 +198,7 @@ class BrewServiceTest {
         // Arrange: milk stock is lower than required (50 < 150)
         milk.setCurrentStock(new BigDecimal("50.0"));
 
-        OrderRequest request = new OrderRequest(List.of(10L), 1L);
+        OrderRequest request = new OrderRequest(List.of(10L), 1L, null);
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
         given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
         // First ingredient passes validation
@@ -236,7 +236,7 @@ class BrewServiceTest {
         latte.setIngredients(List.of(latteEspresso));
         cappuccino.setIngredients(List.of(cappuccinoEspresso));
 
-        OrderRequest request = new OrderRequest(List.of(10L, 20L), 1L);
+        OrderRequest request = new OrderRequest(List.of(10L, 20L), 1L, null);
 
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
         given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
@@ -272,7 +272,7 @@ class BrewServiceTest {
         latte.setIngredients(List.of(latteEspresso));
         cappuccino.setIngredients(List.of(cappuccinoEspresso));
 
-        OrderRequest request = new OrderRequest(List.of(10L, 20L), 1L);
+        OrderRequest request = new OrderRequest(List.of(10L, 20L), 1L, null);
 
         given(baristaRepository.findById(1L)).willReturn(Optional.of(barista));
         given(recipeRepository.findByIdWithIngredients(10L)).willReturn(Optional.of(latte));
