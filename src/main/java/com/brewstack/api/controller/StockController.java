@@ -1,5 +1,6 @@
 package com.brewstack.api.controller;
 
+import com.brewstack.api.dto.CreateIngredientRequest;
 import com.brewstack.api.dto.IngredientDTO;
 import com.brewstack.api.dto.RestockRequest;
 import com.brewstack.api.service.StockService;
@@ -10,7 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -19,6 +22,16 @@ import java.util.List;
 public class StockController {
 
     private final StockService stockService;
+
+    @PostMapping
+    public ResponseEntity<IngredientDTO> createIngredient(@Valid @RequestBody CreateIngredientRequest request) {
+        IngredientDTO created = stockService.createIngredient(request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(created.id())
+                .toUri();
+        return ResponseEntity.created(location).body(created);
+    }
 
     @GetMapping
     public ResponseEntity<Page<IngredientDTO>> getAllStock(
