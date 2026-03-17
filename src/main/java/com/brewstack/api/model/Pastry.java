@@ -31,4 +31,7 @@ public class Pastry {
 
     @Column(nullable = false)
     private boolean available = true;
+
+    @Column(name = "image_url")
+    private String imageUrl;
 }

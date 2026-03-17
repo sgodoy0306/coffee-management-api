@@ -15,5 +15,7 @@ public record CreatePastryRequest(
         @DecimalMin(value = "0.01", message = "price must be greater than 0")
         BigDecimal price,
 
-        boolean available
+        boolean available,
+
+        String imageUrl
 ) {}
