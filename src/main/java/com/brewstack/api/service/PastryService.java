@@ -34,7 +34,7 @@ public class PastryService {
     public PastryDTO create(CreatePastryRequest request) {
         log.info("Creating pastry name='{}'", request.name());
         Pastry pastry = new Pastry(null, request.name(), request.description(),
-                request.price(), request.available());
+                request.price(), request.available(), request.imageUrl());
         PastryDTO created = toDTO(pastryRepository.save(pastry));
         log.info("Pastry created id={}", created.id());
         return created;
@@ -48,6 +48,7 @@ public class PastryService {
         pastry.setDescription(request.description());
         pastry.setPrice(request.price());
         pastry.setAvailable(request.available());
+        pastry.setImageUrl(request.imageUrl());
         return toDTO(pastryRepository.save(pastry));
     }
 
@@ -66,6 +67,6 @@ public class PastryService {
 
     private PastryDTO toDTO(Pastry pastry) {
         return new PastryDTO(pastry.getId(), pastry.getName(), pastry.getDescription(),
-                pastry.getPrice(), pastry.isAvailable());
+                pastry.getPrice(), pastry.isAvailable(), pastry.getImageUrl());
     }
 }
