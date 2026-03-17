@@ -46,13 +46,14 @@ public class RecipeService {
         recipe.setBaseXpReward(request.baseXpReward());
         recipe.setPrice(request.price());
         recipe.setImageUrl(request.imageUrl());
+        recipe.setDescription(request.description());
         Recipe saved = recipeRepository.save(recipe);
 
-        List<RecipeIngredient> links = request.ingredients().stream().map(req -> {
+        List<RecipeIngredient> links = new ArrayList<>(request.ingredients().stream().map(req -> {
             Ingredient ingredient = ingredientRepository.findById(req.ingredientId())
                     .orElseThrow(() -> new IngredientNotFoundException(req.ingredientId()));
             return new RecipeIngredient(null, saved, ingredient, req.quantity());
-        }).collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        }).toList());
 
         saved.setIngredients(links);
         RecipeDTO created = toDTO(recipeRepository.save(saved));
@@ -67,7 +68,7 @@ public class RecipeService {
                         ri.getIngredient().getUnit(),
                         ri.getQuantityRequired()))
                 .toList();
-        return new RecipeDTO(recipe.getId(), recipe.getName(), recipe.getBaseXpReward(), recipe.getPrice(), recipe.getImageUrl(), ingredients);
+        return new RecipeDTO(recipe.getId(), recipe.getName(), recipe.getBaseXpReward(), recipe.getPrice(), recipe.getImageUrl(), recipe.getDescription(), ingredients);
     }
 
     private Recipe findEntityById(Long id) {
@@ -83,6 +84,7 @@ public class RecipeService {
         recipe.setBaseXpReward(request.baseXpReward());
         recipe.setPrice(request.price());
         recipe.setImageUrl(request.imageUrl());
+        recipe.setDescription(request.description());
 
         if (request.ingredients() != null && !request.ingredients().isEmpty()) {
             log.info("Replacing ingredients for recipe id={}, count={}", id, request.ingredients().size());

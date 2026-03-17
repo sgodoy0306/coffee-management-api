@@ -33,6 +33,9 @@ public class Recipe {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 20)
     private List<RecipeIngredient> ingredients;
