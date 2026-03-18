@@ -39,8 +39,11 @@ public class BrewService {
 
     @Transactional
     public OrderSummaryDTO processOrder(OrderRequest request) {
-        Barista barista = baristaRepository.findById(request.baristaId())
-                .orElseThrow(() -> new BaristaNotFoundException(request.baristaId()));
+        // baristaId is optional — when null the order is processed without a barista assignment.
+        Barista barista = (request.baristaId() != null)
+                ? baristaRepository.findById(request.baristaId())
+                        .orElseThrow(() -> new BaristaNotFoundException(request.baristaId()))
+                : null;
 
         OrderType orderType = request.orderType() != null ? request.orderType() : OrderType.DINE_IN;
 
@@ -113,15 +116,20 @@ public class BrewService {
         balance.setTotalOrders(balance.getTotalOrders() + recipes.size());
         dailyBalanceRepository.save(balance);
 
-        // Grant XP to barista
-        barista.setTotalXp(barista.getTotalXp() + xpGained);
-        int newLevel = Barista.levelForXp(barista.getTotalXp());
-        barista.setLevel(newLevel);
-        baristaRepository.save(barista);
+        // Grant XP to barista only when one is assigned to this order.
+        long newTotalXp = 0L;
+        int newLevel = 0;
+        if (barista != null) {
+            barista.setTotalXp(barista.getTotalXp() + xpGained);
+            newLevel = Barista.levelForXp(barista.getTotalXp());
+            barista.setLevel(newLevel);
+            baristaRepository.save(barista);
+            newTotalXp = barista.getTotalXp();
+        }
 
         log.info("Order processed: baristaId={} recipes={} revenue={} newLevel={} orderType={}",
                 request.baristaId(), brewedNames, orderRevenue, newLevel, orderType);
 
-        return new OrderSummaryDTO(brewedNames, orderRevenue, recipes.size(), barista.getTotalXp(), newLevel, orderType);
+        return new OrderSummaryDTO(brewedNames, orderRevenue, recipes.size(), newTotalXp, newLevel, orderType);
     }
 }
