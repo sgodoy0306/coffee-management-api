@@ -114,6 +114,7 @@ class RecipeServiceTest {
                 20,
                 new BigDecimal("4.50"),
                 null,
+                null,
                 List.of(new RecipeIngredientRequest(1L, new BigDecimal("18.000")))
         );
 
@@ -141,6 +142,7 @@ class RecipeServiceTest {
                 "Ghost Recipe",
                 10,
                 new BigDecimal("3.00"),
+                null,
                 null,
                 List.of(new RecipeIngredientRequest(999L, new BigDecimal("5.000")))
         );
@@ -185,6 +187,7 @@ class RecipeServiceTest {
                 25,
                 new BigDecimal("5.00"),
                 null,
+                null,
                 List.of(new RecipeIngredientRequest(1L, new BigDecimal("18.000")))
         );
 
@@ -222,6 +225,7 @@ class RecipeServiceTest {
                 30,
                 new BigDecimal("5.00"),
                 null,
+                null,
                 null
         );
 
@@ -244,6 +248,7 @@ class RecipeServiceTest {
                 "Phantom",
                 0,
                 new BigDecimal("1.00"),
+                null,
                 null,
                 null
         );
