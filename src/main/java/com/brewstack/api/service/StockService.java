@@ -1,5 +1,6 @@
 package com.brewstack.api.service;
 
+import com.brewstack.api.dto.CreateIngredientRequest;
 import com.brewstack.api.dto.IngredientDTO;
 import com.brewstack.api.dto.RestockRequest;
 import com.brewstack.api.exception.IngredientNotFoundException;
@@ -20,6 +21,15 @@ import java.util.List;
 public class StockService {
 
     private final IngredientRepository ingredientRepository;
+
+    @Transactional
+    public IngredientDTO createIngredient(CreateIngredientRequest request) {
+        log.info("Creating new ingredient name={} unit={}", request.name(), request.unit());
+        Ingredient ingredient = new Ingredient(null, request.name(), request.currentStock(), request.minimumThreshold(), request.unit());
+        Ingredient saved = ingredientRepository.save(ingredient);
+        log.info("Ingredient created with id={}", saved.getId());
+        return toDTO(saved);
+    }
 
     @Transactional(readOnly = true)
     public Page<IngredientDTO> getAllStock(Pageable pageable) {
