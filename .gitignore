@@ -1,3 +1,5 @@
 target/
 ArchitecturePlan.md
 .env
+*.log
+logs/

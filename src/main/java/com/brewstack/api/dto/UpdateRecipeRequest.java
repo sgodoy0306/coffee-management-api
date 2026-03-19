@@ -14,5 +14,6 @@ public record UpdateRecipeRequest(
         @NotNull @Min(0) Integer baseXpReward,
         @NotNull @DecimalMin("0.00") BigDecimal price,
         String imageUrl,
+        String description,
         @Valid List<RecipeIngredientRequest> ingredients
 ) {}

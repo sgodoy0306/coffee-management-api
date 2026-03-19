@@ -7,5 +7,6 @@ public record PastryDTO(
         String name,
         String description,
         BigDecimal price,
-        boolean available
+        boolean available,
+        String imageUrl
 ) {}
